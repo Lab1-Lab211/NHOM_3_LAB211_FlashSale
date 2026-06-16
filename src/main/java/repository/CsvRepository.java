@@ -132,11 +132,16 @@ public class CsvRepository<T extends BaseEntity> {
      * @return danh sách entity, không bao giờ {@code null}
      */
     public List<T> findAll() {
-        List<T> result = new ArrayList<>();
-        try {
-            List<String> lines = Files.readAllLines(Paths.get(filePath), StandardCharsets.UTF_8);
-            for (int i = 1; i < lines.size(); i++) { // skip line 0 = header (có thể chứa BOM)
-                String line = lines.get(i).trim();
+        // Pre-allocate capacity to avoid array resizing overhead
+        List<T> result = new ArrayList<>(5000);
+        try (BufferedReader br = Files.newBufferedReader(Paths.get(filePath), StandardCharsets.UTF_8)) {
+            String line = br.readLine(); // skip line 0 = header (có thể chứa BOM)
+            if (line == null) return result;
+
+            int lineNumber = 1;
+            while ((line = br.readLine()) != null) {
+                lineNumber++;
+                line = line.trim();
                 if (line.isEmpty()) continue;
 
                 try {
@@ -144,7 +149,7 @@ public class CsvRepository<T extends BaseEntity> {
                     entity.fromCsvLine(line);
                     result.add(entity);
                 } catch (Exception e) {
-                    System.err.println("[CsvRepository] Bỏ qua dòng " + (i + 1)
+                    System.err.println("[CsvRepository] Bỏ qua dòng " + lineNumber
                             + " trong " + filePath + ": " + e.getMessage());
                 }
             }
