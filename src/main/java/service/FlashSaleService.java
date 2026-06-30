@@ -18,6 +18,27 @@ public class FlashSaleService {
         this.flashSaleItemService = flashSaleItemService;
     }
 
+    public List<FlashSaleEvent> getAllEvents() {
+        return flashSaleEventRepository.findAll();
+    }
+
+    public FlashSaleEvent createEvent(FlashSaleEvent event) {
+        flashSaleEventRepository.save(event);
+        return event;
+    }
+
+    public boolean updateEvent(FlashSaleEvent event) {
+        if (flashSaleEventRepository.findById(event.getEventId()).isPresent()) {
+            flashSaleEventRepository.update(event);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean deleteEvent(String eventId) {
+        return flashSaleEventRepository.deleteById(eventId);
+    }
+
     public List<FlashSaleEvent> listActiveEvents() {
         return flashSaleEventRepository.findDangDienRa();
     }
@@ -28,6 +49,18 @@ public class FlashSaleService {
 
     public List<FlashSaleItem> listActiveAvailableItemsByEvent(String eventId) {
         return flashSaleItemService.listActiveAvailableItemsByEvent(eventId);
+    }
+
+    public List<FlashSaleItem> getAllItems() {
+        return flashSaleItemService.getAllItems();
+    }
+
+    public FlashSaleItem addItem(FlashSaleItem item) {
+        return flashSaleItemService.addItem(item);
+    }
+
+    public boolean deleteItem(String flashItemId) {
+        return flashSaleItemService.deleteItem(flashItemId);
     }
 
     public Optional<FlashSaleEvent> startEvent(String eventId) {

@@ -14,8 +14,36 @@ public class FlashSaleController {
         this.flashSaleService = flashSaleService;
     }
 
+    public List<FlashSaleEvent> getAllEvents() {
+        return flashSaleService.getAllEvents();
+    }
+
+    public FlashSaleEvent createEvent(FlashSaleEvent event) {
+        return flashSaleService.createEvent(event);
+    }
+
+    public boolean updateEvent(FlashSaleEvent event) {
+        return flashSaleService.updateEvent(event);
+    }
+
+    public boolean deleteEvent(String eventId) {
+        return flashSaleService.deleteEvent(eventId);
+    }
+
     public List<FlashSaleEvent> getActiveEvents() {
         return flashSaleService.listActiveEvents();
+    }
+
+    public List<FlashSaleItem> getAllItems() {
+        return flashSaleService.getAllItems();
+    }
+
+    public FlashSaleItem addItem(FlashSaleItem item) {
+        return flashSaleService.addItem(item);
+    }
+
+    public boolean deleteItem(String flashItemId) {
+        return flashSaleService.deleteItem(flashItemId);
     }
 
     public List<FlashSaleItem> getActiveItems() {

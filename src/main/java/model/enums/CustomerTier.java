@@ -1,8 +1,8 @@
 package model.enums;
 
 /**
- * Hạng thành viên của khách hàng.
- * VIP và PREMIUM được ưu tiên trong hàng đợi đặt hàng.
+ * Hang thanh vien cua khach hang.
+ * VIP va PREMIUM duoc uu tien trong hang doi dat hang.
  */
 public enum CustomerTier {
     VIP("Khách VIP", 1),
@@ -10,7 +10,7 @@ public enum CustomerTier {
     REGULAR("Khách thường", 3);
 
     private final String moTa;
-    private final int doUuTien; // số nhỏ = ưu tiên cao
+    private final int doUuTien; // so nho = uu tien cao
 
     CustomerTier(String moTa, int doUuTien) {
         this.moTa = moTa;
