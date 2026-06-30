@@ -20,6 +20,10 @@ public class CustomerService {
         return register(customerId, name, email, tier);
     }
 
+    public Customer register(String name, String email) {
+        return register(name, email, CustomerTier.REGULAR);
+    }
+
     public Customer register(String customerId, String name, String email, CustomerTier tier) {
         validateRegisterInput(customerId, name, email, tier);
 
