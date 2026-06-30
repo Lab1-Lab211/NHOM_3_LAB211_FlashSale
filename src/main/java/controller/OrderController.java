@@ -21,6 +21,6 @@ public class OrderController {
         if (customer == null) {
             throw new IllegalStateException("Vui long login truoc khi dat hang");
         }
-        return orderService.placeOrderNoLock(customer.getCustomerId(), flashItemId, quantity);
+        return orderService.placeOrderNoLock(customer, flashItemId, quantity);
     }
 }

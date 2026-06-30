@@ -1,7 +1,6 @@
 package controller;
 
 import model.Customer;
-import model.enums.CustomerTier;
 import service.CustomerService;
 
 import java.util.Optional;
@@ -14,8 +13,8 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
-    public Customer register(String name, String email, CustomerTier tier) {
-        currentCustomer = customerService.register(name, email, tier);
+    public Customer register(String name, String email) {
+        currentCustomer = customerService.register(name, email);
         return currentCustomer;
     }
 

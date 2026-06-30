@@ -4,7 +4,6 @@ import controller.CustomerController;
 import controller.FlashSaleController;
 import controller.OrderController;
 import model.Customer;
-import model.enums.CustomerTier;
 import repository.CustomerRepository;
 import repository.FlashSaleEventRepository;
 import repository.FlashSaleItemRepository;
@@ -52,7 +51,7 @@ public class MainView {
         FlashSaleItemService itemService = new FlashSaleItemService(itemRepository, eventRepository);
         FlashSaleService flashSaleService = new FlashSaleService(eventRepository, itemService);
         OrderService orderService = new OrderService(
-                orderRepository, orderDetailRepository, itemRepository, eventRepository);
+                orderRepository, orderDetailRepository, itemRepository, eventRepository, customerRepository);
 
         this.customerController = new CustomerController(customerService);
         FlashSaleController flashSaleController = new FlashSaleController(flashSaleService);
@@ -128,11 +127,11 @@ public class MainView {
         String name = scanner.nextLine().trim();
         System.out.print("Nhap email: ");
         String email = scanner.nextLine().trim();
-        CustomerTier tier = readTier();
 
         try {
-            Customer customer = customerController.register(name, email, tier);
-            System.out.println("Register thanh cong. Customer ID: " + customer.getCustomerId());
+            Customer customer = customerController.register(name, email);
+            System.out.println("Register thanh cong. Customer ID: " + customer.getCustomerId()
+                    + " | Tier mac dinh: " + customer.getTier());
         } catch (IllegalArgumentException e) {
             System.out.println("Register that bai: " + e.getMessage());
         }
@@ -147,19 +146,6 @@ public class MainView {
         } else {
             System.out.println("Khong tim thay customer voi email nay.");
         }
-    }
-
-    private CustomerTier readTier() {
-        System.out.println("Chon tier: 1. VIP | 2. PREMIUM | 3. REGULAR");
-        System.out.print("Tier: ");
-        String input = scanner.nextLine().trim();
-        if ("1".equals(input)) {
-            return CustomerTier.VIP;
-        }
-        if ("2".equals(input)) {
-            return CustomerTier.PREMIUM;
-        }
-        return CustomerTier.REGULAR;
     }
 
     private Path resolveDataRoot() {

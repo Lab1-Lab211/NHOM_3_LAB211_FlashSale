@@ -58,6 +58,14 @@ public class CustomerServiceTest {
     }
 
     @Test
+    public void testRegisterNewCustomerDefaultsToRegularTier() {
+        Customer customer = customerService.register("Nguyen Van A", "a.nguyen@email.com");
+
+        assertNotNull(customer);
+        assertEquals(CustomerTier.REGULAR, customer.getTier());
+    }
+
+    @Test
     public void testRegisterDuplicateIdThrowsException() {
         customerService.register("CUS-00001", "Nguyen Van A", "a.nguyen@email.com", CustomerTier.REGULAR);
 
@@ -102,8 +110,9 @@ public class CustomerServiceTest {
         assertNull(customerController.getCurrentCustomer());
 
         // Đăng ký & Tự động set currentCustomer
-        Customer c = customerController.register("Nguyen Van A", "a.nguyen@email.com", CustomerTier.VIP);
+        Customer c = customerController.register("Nguyen Van A", "a.nguyen@email.com");
         assertNotNull(c);
+        assertEquals(CustomerTier.REGULAR, c.getTier());
         assertTrue(customerController.isLoggedIn());
         assertEquals(c, customerController.getCurrentCustomer());
 

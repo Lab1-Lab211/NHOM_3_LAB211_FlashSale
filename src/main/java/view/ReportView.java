@@ -18,6 +18,13 @@ public class ReportView {
         System.out.println("Flash Item ID : " + result.getOrderDetail().getFlashItemId());
         System.out.println("Quantity      : " + result.getOrderDetail().getQuantity());
         System.out.printf("Unit price    : %.0f%n", result.getOrderDetail().getUnitPrice());
+        if (result.getTierBeforeOrder() != null) {
+            System.out.println("Tier before   : " + result.getTierBeforeOrder());
+            System.out.printf("Subtotal      : %.0f%n", result.getSubtotalAmount());
+            System.out.printf("Discount      : %.0f%% (-%.0f)%n",
+                    result.getDiscountPercent(), result.getDiscountAmount());
+            System.out.println("Tier after    : " + result.getTierAfterOrder());
+        }
         System.out.printf("Total amount  : %.0f%n", result.getOrder().getTotalAmount());
         System.out.println("Sold quantity : " + result.getFlashSaleItem().getSoldQty());
         System.out.println("Item version  : " + result.getFlashSaleItem().getVersion());
