@@ -1,6 +1,7 @@
 package model;
 
 import model.enums.CustomerTier;
+import model.enums.UserRole;
 
 /**
  * Thực thể Khách hàng — đại diện cho người mua trong hệ thống Flash Sale.
@@ -9,6 +10,7 @@ import model.enums.CustomerTier;
 public class Customer extends BaseEntity {
 
     private String customerId;
+    private UserRole role = UserRole.CUSTOMER;
     private String name;              // Họ và tên
     private String email;             // Email
     private CustomerTier tier;        // Hạng thành viên (VIP/PREMIUM/REGULAR)
@@ -70,9 +72,12 @@ public class Customer extends BaseEntity {
     public String getRegisteredDate() { return registeredDate; }
     public void setRegisteredDate(String registeredDate) { this.registeredDate = registeredDate; }
 
+    public UserRole getRole() { return role; }
+    public void setRole(UserRole role) { this.role = role == null ? UserRole.CUSTOMER : role; }
+
     @Override
     public String toString() {
-        return String.format("Customer{id='%s', ten='%s', email='%s', hang=%s, ngayDK='%s'}",
-                customerId, name, email, tier.getMoTa(), registeredDate);
+        return String.format("Customer{id='%s', role='%s', ten='%s', email='%s', hang=%s, ngayDK='%s'}",
+                customerId, role.getDisplayName(), name, email, tier.getMoTa(), registeredDate);
     }
 }

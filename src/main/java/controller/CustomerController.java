@@ -1,6 +1,7 @@
 package controller;
 
 import model.Customer;
+import model.enums.UserRole;
 import service.CustomerService;
 
 import java.util.Optional;
@@ -36,5 +37,9 @@ public class CustomerController {
 
     public boolean isLoggedIn() {
         return currentCustomer != null;
+    }
+
+    public UserRole getCurrentRole() {
+        return currentCustomer == null ? null : currentCustomer.getRole();
     }
 }

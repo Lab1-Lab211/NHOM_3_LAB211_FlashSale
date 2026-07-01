@@ -1,0 +1,17 @@
+# Java build outputs
+out/
+target/
+*.class
+
+# Generated artifacts and temporary tool output
+outputs/
+node_modules/
+
+# OS/editor local files
+.vscode/
+.idea/
+*.log
+*.tmp
+
+# Maven local build metadata
+.mvn/timing.properties

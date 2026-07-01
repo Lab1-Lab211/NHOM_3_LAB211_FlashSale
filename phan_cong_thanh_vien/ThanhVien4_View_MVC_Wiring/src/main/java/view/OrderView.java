@@ -8,19 +8,17 @@ import exception.ExceedPurchaseLimitException;
 import exception.OutOfStockException;
 import service.BookingResult;
 
-import java.util.Scanner;
-
 public class OrderView {
     private final OrderController orderController;
     private final CustomerController customerController;
-    private final Scanner scanner;
+    private final ConsoleInput input;
 
     public OrderView(OrderController orderController,
                      CustomerController customerController,
-                     Scanner scanner) {
+                     ConsoleInput input) {
         this.orderController = orderController;
         this.customerController = customerController;
-        this.scanner = scanner;
+        this.input = input;
     }
 
     public BookingResult placeOrderNoLock() {
@@ -29,10 +27,8 @@ public class OrderView {
             return null;
         }
 
-        System.out.print("Nhap flashItemId: ");
-        String flashItemId = scanner.nextLine().trim();
-        System.out.print("Nhap so luong (1-2): ");
-        int quantity = readInt();
+        String flashItemId = input.readLine("Nhap flashItemId: ").trim();
+        int quantity = input.readInt("Nhap so luong (1-2): ");
 
         try {
             return orderController.placeOrderNoLock(
@@ -45,12 +41,4 @@ public class OrderView {
         }
     }
 
-    private int readInt() {
-        String input = scanner.nextLine().trim();
-        try {
-            return Integer.parseInt(input);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
-    }
 }

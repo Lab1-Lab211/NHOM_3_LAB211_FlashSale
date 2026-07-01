@@ -3,6 +3,7 @@ package service;
 import exception.EntityNotFoundException;
 import exception.EventNotActiveException;
 import exception.ExceedPurchaseLimitException;
+import exception.OptimisticLockException;
 import exception.OutOfStockException;
 import model.Customer;
 import model.FlashSaleEvent;
@@ -10,6 +11,7 @@ import model.FlashSaleItem;
 import model.Order;
 import model.OrderDetail;
 import model.enums.CustomerTier;
+import model.enums.LockMechanism;
 import model.enums.OrderStatus;
 import model.enums.SaleStatus;
 import repository.CustomerRepository;
@@ -58,23 +60,39 @@ public class OrderService {
 
     public BookingResult placeOrderNoLock(Customer customer, String flashItemId, int quantity)
             throws EntityNotFoundException, EventNotActiveException,
-            ExceedPurchaseLimitException, OutOfStockException {
+            ExceedPurchaseLimitException, OutOfStockException, OptimisticLockException {
+        return placeOrder(customer, flashItemId, quantity, LockMechanism.NO_LOCK);
+    }
+
+    public BookingResult placeOrder(Customer customer, String flashItemId, int quantity, LockMechanism mechanism)
+            throws EntityNotFoundException, EventNotActiveException,
+            ExceedPurchaseLimitException, OutOfStockException, OptimisticLockException {
         if (customer == null) {
             throw new IllegalStateException("Vui long login truoc khi dat hang");
         }
-        return placeOrderNoLock(customer.getCustomerId(), customer.getTier(), customer, flashItemId, quantity);
+        return placeOrder(customer.getCustomerId(), customer.getTier(), customer, flashItemId, quantity, mechanism);
     }
 
     public BookingResult placeOrderNoLock(String customerId, String flashItemId, int quantity)
             throws EntityNotFoundException, EventNotActiveException,
-            ExceedPurchaseLimitException, OutOfStockException {
-        return placeOrderNoLock(customerId, CustomerTier.REGULAR, null, flashItemId, quantity);
+            ExceedPurchaseLimitException, OutOfStockException, OptimisticLockException {
+        return placeOrder(customerId, flashItemId, quantity, LockMechanism.NO_LOCK);
     }
 
-    private BookingResult placeOrderNoLock(String customerId, CustomerTier tierBeforeOrder,
-                                           Customer customerToUpdate, String flashItemId, int quantity)
+    public BookingResult placeOrder(String customerId, String flashItemId, int quantity, LockMechanism mechanism)
             throws EntityNotFoundException, EventNotActiveException,
-            ExceedPurchaseLimitException, OutOfStockException {
+            ExceedPurchaseLimitException, OutOfStockException, OptimisticLockException {
+        return placeOrder(customerId, CustomerTier.REGULAR, null, flashItemId, quantity, mechanism);
+    }
+
+    private BookingResult placeOrder(String customerId, CustomerTier tierBeforeOrder,
+                                     Customer customerToUpdate, String flashItemId, int quantity,
+                                     LockMechanism mechanism)
+            throws EntityNotFoundException, EventNotActiveException,
+            ExceedPurchaseLimitException, OutOfStockException, OptimisticLockException {
+        if (mechanism == null) {
+            mechanism = LockMechanism.NO_LOCK;
+        }
         validateQuantity(quantity);
 
         FlashSaleItem item = flashSaleItemRepository.findById(flashItemId)
@@ -93,7 +111,7 @@ public class OrderService {
                     customerId, flashItemId, boughtQuantity, PURCHASE_LIMIT_PER_ITEM);
         }
 
-        flashSaleItemRepository.sellNoLock(flashItemId, quantity);
+        sellStock(flashItemId, quantity, mechanism);
         FlashSaleItem updatedItem = flashSaleItemRepository.findById(flashItemId)
                 .orElseThrow(() -> new EntityNotFoundException("FlashSaleItem", flashItemId));
 
@@ -122,8 +140,27 @@ public class OrderService {
         orderDetailRepository.save(detail);
         CustomerTier tierAfterOrder = updateTierAfterSuccessfulOrder(customerToUpdate, customerId);
 
-        return new BookingResult(order, detail, updatedItem, "Dat hang thanh cong bang NO_LOCK",
+        return new BookingResult(order, detail, updatedItem, "Dat hang thanh cong bang " + mechanism.name(),
                 tierBeforeOrder, tierAfterOrder, subtotalAmount, discountPercent, discountAmount);
+    }
+
+    private void sellStock(String flashItemId, int quantity, LockMechanism mechanism)
+            throws OutOfStockException, EntityNotFoundException, OptimisticLockException {
+        switch (mechanism) {
+            case FILE_LOCK:
+                flashSaleItemRepository.sellWithFileLock(flashItemId, quantity);
+                break;
+            case SYNCHRONIZED:
+                flashSaleItemRepository.sellWithSynchronized(flashItemId, quantity);
+                break;
+            case OPTIMISTIC:
+                flashSaleItemRepository.sellWithOptimisticLock(flashItemId, quantity);
+                break;
+            case NO_LOCK:
+            default:
+                flashSaleItemRepository.sellNoLock(flashItemId, quantity);
+                break;
+        }
     }
 
     private void validateQuantity(int quantity) {

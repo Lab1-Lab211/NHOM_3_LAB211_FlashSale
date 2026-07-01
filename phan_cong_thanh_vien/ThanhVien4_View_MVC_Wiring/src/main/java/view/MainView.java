@@ -4,7 +4,6 @@ import controller.CustomerController;
 import controller.FlashSaleController;
 import controller.OrderController;
 import model.Customer;
-import model.enums.CustomerTier;
 import repository.CustomerRepository;
 import repository.FlashSaleEventRepository;
 import repository.FlashSaleItemRepository;
@@ -16,11 +15,17 @@ import service.FlashSaleItemService;
 import service.FlashSaleService;
 import service.OrderService;
 
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.Scanner;
 
 public class MainView {
-    private final Scanner scanner = new Scanner(System.in);
+    private final ConsoleInput input = new ConsoleInput();
     private final CustomerController customerController;
     private final FlashSaleView flashSaleView;
     private final OrderView orderView;
@@ -28,28 +33,40 @@ public class MainView {
     private BookingResult lastBookingResult;
 
     public MainView() {
-        CustomerRepository customerRepository = new CustomerRepository("data/customers.csv");
-        FlashSaleEventRepository eventRepository = new FlashSaleEventRepository("data/flash_events.csv");
-        FlashSaleItemRepository itemRepository = new FlashSaleItemRepository("data/flash_items.csv");
-        OrderRepository orderRepository = new OrderRepository("data/orders.csv");
-        OrderDetailRepository orderDetailRepository = new OrderDetailRepository("data/order_details.csv");
+        Path dataRoot = resolveDataRoot();
+        Path customerCsv = dataRoot.resolve("customers.csv");
+        Path eventCsv = dataRoot.resolve("flash_events.csv");
+        Path itemCsv = dataRoot.resolve("flash_items.csv");
+        Path orderCsv = dataRoot.resolve("orders.csv");
+        Path orderDetailCsv = dataRoot.resolve("order_details.csv");
+
+        if (!Files.exists(eventCsv) || !Files.exists(itemCsv)) {
+            System.err.println("Khong tim thay file data flash sale. Duong dan dang su dung: " + dataRoot);
+        }
+
+        CustomerRepository customerRepository = new CustomerRepository(customerCsv.toString());
+        FlashSaleEventRepository eventRepository = new FlashSaleEventRepository(eventCsv.toString());
+        FlashSaleItemRepository itemRepository = new FlashSaleItemRepository(itemCsv.toString());
+        OrderRepository orderRepository = new OrderRepository(orderCsv.toString());
+        OrderDetailRepository orderDetailRepository = new OrderDetailRepository(orderDetailCsv.toString());
 
         CustomerService customerService = new CustomerService(customerRepository);
         FlashSaleItemService itemService = new FlashSaleItemService(itemRepository, eventRepository);
         FlashSaleService flashSaleService = new FlashSaleService(eventRepository, itemService);
         OrderService orderService = new OrderService(
-                orderRepository, orderDetailRepository, itemRepository, eventRepository);
+                orderRepository, orderDetailRepository, itemRepository, eventRepository, customerRepository);
 
         this.customerController = new CustomerController(customerService);
         FlashSaleController flashSaleController = new FlashSaleController(flashSaleService);
         OrderController orderController = new OrderController(orderService);
 
         this.flashSaleView = new FlashSaleView(flashSaleController);
-        this.orderView = new OrderView(orderController, customerController, scanner);
+        this.orderView = new OrderView(orderController, customerController, input);
         this.reportView = new ReportView();
     }
 
     public static void main(String[] args) {
+        configureUtf8Console();
         new MainView().run();
     }
 
@@ -57,7 +74,7 @@ public class MainView {
         boolean running = true;
         while (running) {
             showMenu();
-            String choice = scanner.nextLine().trim();
+            String choice = input.readLine().trim();
             switch (choice) {
                 case "1":
                     register();
@@ -110,23 +127,20 @@ public class MainView {
     }
 
     private void register() {
-        System.out.print("Nhap ten: ");
-        String name = scanner.nextLine().trim();
-        System.out.print("Nhap email: ");
-        String email = scanner.nextLine().trim();
-        CustomerTier tier = readTier();
+        String name = input.readLine("Nhap ten: ").trim();
+        String email = input.readLine("Nhap email: ").trim();
 
         try {
-            Customer customer = customerController.register(name, email, tier);
-            System.out.println("Register thanh cong. Customer ID: " + customer.getCustomerId());
+            Customer customer = customerController.register(name, email);
+            System.out.println("Register thanh cong. Customer ID: " + customer.getCustomerId()
+                    + " | Tier mac dinh: " + customer.getTier());
         } catch (IllegalArgumentException e) {
             System.out.println("Register that bai: " + e.getMessage());
         }
     }
 
     private void login() {
-        System.out.print("Nhap email: ");
-        String email = scanner.nextLine().trim();
+        String email = input.readLine("Nhap email: ").trim();
         Optional<Customer> customer = customerController.login(email);
         if (customer.isPresent()) {
             System.out.println("Login thanh cong. Xin chao " + customer.get().getName());
@@ -135,16 +149,39 @@ public class MainView {
         }
     }
 
-    private CustomerTier readTier() {
-        System.out.println("Chon tier: 1. VIP | 2. PREMIUM | 3. REGULAR");
-        System.out.print("Tier: ");
-        String input = scanner.nextLine().trim();
-        if ("1".equals(input)) {
-            return CustomerTier.VIP;
+    private Path resolveDataRoot() {
+        Path current = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+        while (current != null) {
+            if (Files.exists(current.resolve("pom.xml"))) {
+                return current.resolve("data");
+            }
+            current = current.getParent();
         }
-        if ("2".equals(input)) {
-            return CustomerTier.PREMIUM;
+        return Paths.get("data").toAbsolutePath();
+    }
+
+    private static void configureUtf8Console() {
+        enableWindowsUtf8CodePage();
+        try {
+            System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8.name()));
+            System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8.name()));
+        } catch (UnsupportedEncodingException e) {
+            System.err.println("Khong the cau hinh console UTF-8: " + e.getMessage());
         }
-        return CustomerTier.REGULAR;
+    }
+
+    private static void enableWindowsUtf8CodePage() {
+        String osName = System.getProperty("os.name", "").toLowerCase();
+        if (!osName.contains("win")) {
+            return;
+        }
+        try {
+            new ProcessBuilder("cmd", "/c", "chcp", "65001")
+                    .redirectErrorStream(true)
+                    .start()
+                    .waitFor();
+        } catch (Exception ignored) {
+            // Neu khong doi duoc code page, van fallback bang Console/UTF-8 scanner.
+        }
     }
 }
