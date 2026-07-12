@@ -57,4 +57,25 @@ public class SellerController {
     public List<FlashSaleItem> getItemsByEvent(String eventId) {
         return sellerService.getItemsByEvent(currentSeller, eventId);
     }
+
+    public Optional<FlashSaleEvent> findOwnEvent(String eventId) {
+        return sellerService.findOwnEvent(currentSeller, eventId);
+    }
+
+    public FlashSaleEvent updateEvent(String eventId, String name, String start,
+                                      String end, Integer discount) {
+        return sellerService.updateOwnEvent(currentSeller, eventId, name, start, end, discount);
+    }
+
+    public boolean removeItem(String eventId, String flashItemId) {
+        return sellerService.removeItemFromOwnEvent(currentSeller, eventId, flashItemId);
+    }
+
+    public FlashSaleEvent resubmit(String eventId) {
+        return sellerService.resubmitRejectedEvent(currentSeller, eventId);
+    }
+
+    public Optional<Product> findProductById(String productId) {
+        return sellerService.findProductById(productId);
+    }
 }
