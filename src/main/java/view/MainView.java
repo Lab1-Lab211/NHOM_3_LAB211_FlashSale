@@ -11,6 +11,7 @@ import repository.FlashSaleItemRepository;
 import repository.OrderDetailRepository;
 import repository.OrderRepository;
 import repository.OrderTransactionRepository;
+import repository.ProductRepository;
 import service.BookingResult;
 import service.CustomerService;
 import service.FlashSaleItemService;
@@ -41,6 +42,7 @@ public class MainView {
         Path customerCsv = dataRoot.resolve("customers.csv");
         Path eventCsv = dataRoot.resolve("flash_events.csv");
         Path itemCsv = dataRoot.resolve("flash_items.csv");
+        Path productCsv = dataRoot.resolve("products.csv");
         Path orderCsv = dataRoot.resolve("orders.csv");
         Path orderDetailCsv = dataRoot.resolve("order_details.csv");
         Path transactionCsv = dataRoot.resolve("transactions.csv");
@@ -52,12 +54,13 @@ public class MainView {
         CustomerRepository customerRepository = new CustomerRepository(customerCsv.toString());
         FlashSaleEventRepository eventRepository = new FlashSaleEventRepository(eventCsv.toString());
         FlashSaleItemRepository itemRepository = new FlashSaleItemRepository(itemCsv.toString());
+        ProductRepository productRepository = new ProductRepository(productCsv.toString());
         OrderRepository orderRepository = new OrderRepository(orderCsv.toString());
         OrderDetailRepository orderDetailRepository = new OrderDetailRepository(orderDetailCsv.toString());
         OrderTransactionRepository transactionRepository = new OrderTransactionRepository(transactionCsv.toString());
 
         CustomerService customerService = new CustomerService(customerRepository);
-        FlashSaleItemService itemService = new FlashSaleItemService(itemRepository, eventRepository);
+        FlashSaleItemService itemService = new FlashSaleItemService(itemRepository, eventRepository, productRepository);
         FlashSaleService flashSaleService = new FlashSaleService(eventRepository, itemService);
         OrderService orderService = new OrderService(
                 orderRepository, orderDetailRepository, itemRepository, eventRepository, customerRepository);
@@ -147,9 +150,14 @@ public class MainView {
     private void register() {
         String name = input.readLine("Nhap ten: ").trim();
         String email = input.readLine("Nhap email: ").trim();
+        String password = input.readPassword("Nhap mat khau (toi thieu 6 ky tu): ");
+        String confirmPassword = input.readPassword("Xac nhan mat khau: ");
 
         try {
-            Customer customer = customerController.register(name, email);
+            if (!password.equals(confirmPassword)) {
+                throw new IllegalArgumentException("Xac nhan mat khau khong khop");
+            }
+            Customer customer = customerController.register(name, email, password);
             System.out.println("Register thanh cong. Customer ID: " + customer.getCustomerId()
                     + " | Tier mac dinh: " + customer.getTier());
         } catch (IllegalArgumentException e) {
@@ -159,11 +167,12 @@ public class MainView {
 
     private void login() {
         String email = input.readLine("Nhap email: ").trim();
-        Optional<Customer> customer = customerController.login(email);
+        String password = input.readPassword("Nhap mat khau: ");
+        Optional<Customer> customer = customerController.login(email, password);
         if (customer.isPresent()) {
             System.out.println("Login thanh cong. Xin chao " + customer.get().getName());
         } else {
-            System.out.println("Khong tim thay customer voi email nay.");
+            System.out.println("Email hoac mat khau khong dung.");
         }
     }
 

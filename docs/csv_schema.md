@@ -78,8 +78,10 @@ PRD-00003,Quạt điện GD-0003,GIA_DUNG,1875000.0,364,1
 | 1 | `customerId` | `String` | **PK**, NOT NULL, Unique | Mã khách hàng, format `CUS-XXXXX` | `CUS-00001` |
 | 2 | `name` | `String` | NOT NULL | Họ và tên (tiếng Việt) | `Nguyễn Văn An` |
 | 3 | `email` | `String` | NOT NULL, Unique | Địa chỉ email (không dấu) | `an.nguyen1@email.com` |
-| 4 | `tier` | `Enum` | NOT NULL | Hạng thành viên | `VIP` |
-| 5 | `registeredDate` | `String` | NOT NULL | Ngày đăng ký, format `yyyy-MM-dd` | `2024-05-12` |
+| 4 | `passwordHash` | `String` | NOT NULL | PBKDF2-HMAC-SHA256 hash dạng Base64; không phải mật khẩu gốc | `m1k...8Q=` |
+| 5 | `passwordSalt` | `String` | NOT NULL | Salt ngẫu nhiên 16 byte dạng Base64 | `W8n...PQ==` |
+| 6 | `tier` | `Enum` | NOT NULL | Hạng thành viên | `VIP` |
+| 7 | `registeredDate` | `String` | NOT NULL | Ngày đăng ký, format `yyyy-MM-dd` | `2024-05-12` |
 
 **Giá trị Enum `tier` (CustomerTier):**
 
@@ -91,10 +93,13 @@ PRD-00003,Quạt điện GD-0003,GIA_DUNG,1875000.0,364,1
 
 **Dữ liệu mẫu:**
 ```csv
-customerId,name,email,tier,registeredDate
-CUS-00001,Lê Thanh Minh,minh.le1@email.com,REGULAR,2025-09-08
-CUS-00002,Phạm Đức Tú,tu.pham2@email.com,PREMIUM,2024-03-15
+customerId,name,email,passwordHash,passwordSalt,tier,registeredDate
+CUS-00001,Lê Thanh Minh,minh.le1@email.com,m1k...8Q=,W8n...PQ==,REGULAR,2025-09-08
+CUS-00002,Phạm Đức Tú,tu.pham2@email.com,k9a...2M=,P7x...LA==,PREMIUM,2024-03-15
 ```
+
+Tài khoản do `DataGenerator` tạo dùng mật khẩu mặc định `Flash@123`. Mỗi khách
+hàng có salt riêng; hệ thống không lưu mật khẩu gốc.
 
 ---
 

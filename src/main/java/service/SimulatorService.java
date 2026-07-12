@@ -13,6 +13,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class SimulatorService {
     private static final int DEFAULT_TIMEOUT_SECONDS = 60;
@@ -34,6 +43,15 @@ public class SimulatorService {
         for (LockMechanism mechanism : LockMechanism.values()) {
             results.add(runSingle(flashItemId, threadCount, quantityPerThread, mechanism));
         }
+        double baselineThroughput = results.stream()
+                .filter(r -> r.getMechanism() == LockMechanism.NO_LOCK)
+                .mapToDouble(SimulatorResult::getThroughput)
+                .findFirst()
+                .orElse(0.0);
+        for (SimulatorResult result : results) {
+            result.compareWithBaseline(baselineThroughput);
+        }
+        appendSummary(results);
         return results;
     }
 
@@ -56,7 +74,6 @@ public class SimulatorService {
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         List<OrderTransaction> transactions = Collections.synchronizedList(new ArrayList<OrderTransaction>());
 
-        long wallStart = System.nanoTime();
         for (int i = 1; i <= threadCount; i++) {
             final int index = i;
             final LockMechanism selectedMechanism = mechanism;
@@ -175,5 +192,44 @@ public class SimulatorService {
             return "";
         }
         return message.replace(',', ';').replace('\n', ' ').replace('\r', ' ');
+    }
+
+    /** Lưu một dòng tổng hợp cho mỗi mechanism để dùng lại ở báo cáo T9. */
+    private void appendSummary(List<SimulatorResult> results) {
+        Path transactionPath = Paths.get(transactionRepository.getFilePath()).toAbsolutePath();
+        Path parent = transactionPath.getParent();
+        Path summaryPath = (parent == null ? Paths.get("data").toAbsolutePath() : parent)
+                .resolve("simulation_results.csv");
+        boolean writeHeader = !Files.exists(summaryPath);
+        String runId = "RUN-" + LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSS"));
+
+        try (BufferedWriter writer = Files.newBufferedWriter(summaryPath, StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            if (writeHeader) {
+                writer.write("runId,timestamp,flashItemId,threadCount,quantityPerThread,mechanism,"
+                        + "successCount,failCount,limitedQty,finalSoldQty,lostUpdateQty,oversoldQty,"
+                        + "violationRate,elapsedMs,tps,avgLatencyMs,vsBaselinePercent,targetPassed");
+                writer.newLine();
+            }
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            for (SimulatorResult r : results) {
+                writer.write(String.join(",",
+                        runId, timestamp, r.getFlashItemId(), String.valueOf(r.getThreadCount()),
+                        String.valueOf(r.getQuantityPerThread()), r.getMechanism().name(),
+                        String.valueOf(r.getSuccessCount()), String.valueOf(r.getFailCount()),
+                        String.valueOf(r.getLimitedQty()), String.valueOf(r.getFinalSoldQty()),
+                        String.valueOf(r.getLostUpdateQuantity()), String.valueOf(r.getOversoldQuantity()),
+                        String.format(java.util.Locale.US, "%.4f", r.getSafetyViolationRate()),
+                        String.format(java.util.Locale.US, "%.4f", r.getDurationMs()),
+                        String.format(java.util.Locale.US, "%.4f", r.getThroughput()),
+                        String.format(java.util.Locale.US, "%.4f", r.getAvgLatencyMs()),
+                        String.format(java.util.Locale.US, "%.4f", r.getVsBaselinePercent()),
+                        String.valueOf(r.isTargetPassed())));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Khong the ghi simulation_results.csv", e);
+        }
     }
 }

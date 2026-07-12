@@ -283,7 +283,7 @@ public class FlashSaleItemRepository extends CsvRepository<FlashSaleItem> {
         } catch (OutOfStockException | EntityNotFoundException e) {
             throw e; // Re-throw business exceptions
         } catch (IOException e) {
-            System.err.println("[FlashSaleItemRepository] Lỗi FILE_LOCK: " + e.getMessage());
+            throw new IllegalStateException("Lỗi FILE_LOCK khi cập nhật " + flashItemId, e);
         }
     }
 

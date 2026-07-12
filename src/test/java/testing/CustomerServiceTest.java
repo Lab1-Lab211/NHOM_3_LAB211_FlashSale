@@ -105,12 +105,30 @@ public class CustomerServiceTest {
     }
 
     @Test
+    public void testRegisterAndLoginWithPassword() {
+        Customer customer = customerService.register(
+                "Nguyen Van A", "secure@email.com", "abc@123");
+
+        assertNotNull(customer.getPasswordHash());
+        assertFalse(customer.getPasswordHash().contains("abc@123"));
+        assertNotNull(customer.getPasswordSalt());
+        assertTrue(customerService.login("secure@email.com", "abc@123").isPresent());
+        assertFalse(customerService.login("secure@email.com", "sai-mat-khau").isPresent());
+    }
+
+    @Test
+    public void testRegisterRejectsShortPassword() {
+        assertThrows(IllegalArgumentException.class, () -> customerService.register(
+                "Nguyen Van A", "short@email.com", "12345"));
+    }
+
+    @Test
     public void testControllerStateLoginLogout() {
         assertFalse(customerController.isLoggedIn());
         assertNull(customerController.getCurrentCustomer());
 
         // Đăng ký & Tự động set currentCustomer
-        Customer c = customerController.register("Nguyen Van A", "a.nguyen@email.com");
+        Customer c = customerController.register("Nguyen Van A", "a.nguyen@email.com", "abc@123");
         assertNotNull(c);
         assertEquals(CustomerTier.REGULAR, c.getTier());
         assertTrue(customerController.isLoggedIn());
@@ -122,7 +140,7 @@ public class CustomerServiceTest {
         assertNull(customerController.getCurrentCustomer());
 
         // Login lại qua Controller
-        Optional<Customer> loggedIn = customerController.login("a.nguyen@email.com");
+        Optional<Customer> loggedIn = customerController.login("a.nguyen@email.com", "abc@123");
         assertTrue(loggedIn.isPresent());
         assertTrue(customerController.isLoggedIn());
         assertEquals("Nguyen Van A", customerController.getCurrentCustomer().getName());

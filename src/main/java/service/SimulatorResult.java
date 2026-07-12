@@ -14,6 +14,8 @@ public class SimulatorResult {
     private final double throughput;
     private final double avgLatencyMs;
     private final double durationMs;
+    private double vsBaselinePercent;
+    private boolean targetPassed;
 
     public SimulatorResult(LockMechanism mechanism, String flashItemId, int threadCount,
                            int quantityPerThread, long successCount, long failCount,
@@ -43,6 +45,24 @@ public class SimulatorResult {
     public double getThroughput() { return throughput; }
     public double getAvgLatencyMs() { return avgLatencyMs; }
     public double getDurationMs() { return durationMs; }
+    public double getVsBaselinePercent() { return vsBaselinePercent; }
+    public boolean isTargetPassed() { return targetPassed; }
+
+    /** So sánh TPS với NO_LOCK và đánh giá mục tiêu an toàn + giảm không quá 30%. */
+    public void compareWithBaseline(double baselineThroughput) {
+        if (mechanism == LockMechanism.NO_LOCK) {
+            vsBaselinePercent = 0.0;
+        } else if (baselineThroughput <= 0.0) {
+            vsBaselinePercent = -100.0;
+        } else {
+            vsBaselinePercent = (throughput - baselineThroughput) / baselineThroughput * 100.0;
+        }
+        targetPassed = !hasRaceInconsistency() && vsBaselinePercent >= -30.0;
+    }
+
+    public long getRequestedQuantity() {
+        return (long) threadCount * quantityPerThread;
+    }
 
     public long getSuccessfulQuantity() {
         return successCount * quantityPerThread;
@@ -52,7 +72,18 @@ public class SimulatorResult {
         return Math.max(0, getSuccessfulQuantity() - finalSoldQty);
     }
 
+    public long getOversoldQuantity() {
+        return Math.max(0, finalSoldQty - limitedQty);
+    }
+
+    public double getSafetyViolationRate() {
+        long successfulQuantity = getSuccessfulQuantity();
+        if (successfulQuantity == 0) return 0.0;
+        return (getLostUpdateQuantity() + getOversoldQuantity()) * 100.0
+                / successfulQuantity;
+    }
+
     public boolean hasRaceInconsistency() {
-        return getLostUpdateQuantity() > 0 || finalSoldQty > limitedQty;
+        return getLostUpdateQuantity() > 0 || getOversoldQuantity() > 0;
     }
 }

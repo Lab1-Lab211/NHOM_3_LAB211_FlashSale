@@ -126,13 +126,16 @@ public class ModelParseTest {
         @DisplayName("Parse đúng tất cả trường")
         void parseFields() {
             Customer c = new Customer("CUS-00001", "Nguyễn Văn An",
-                    "an.nguyen1@email.com", CustomerTier.VIP, "2024-05-15");
+                    "an.nguyen1@email.com", "hashBase64", "saltBase64",
+                    CustomerTier.VIP, "2024-05-15");
             Customer c2 = new Customer();
             c2.fromCsvLine(c.toCsvLine());
 
             assertEquals("CUS-00001", c2.getCustomerId());
             assertEquals("Nguyễn Văn An", c2.getName());
             assertEquals("an.nguyen1@email.com", c2.getEmail());
+            assertEquals("hashBase64", c2.getPasswordHash());
+            assertEquals("saltBase64", c2.getPasswordSalt());
             assertEquals(CustomerTier.VIP, c2.getTier());
             assertEquals("2024-05-15", c2.getRegisteredDate());
         }
@@ -148,7 +151,7 @@ public class ModelParseTest {
         @Test
         @DisplayName("getCsvHeader() đúng format")
         void csvHeader() {
-            assertEquals("customerId,name,email,tier,registeredDate",
+            assertEquals("customerId,name,email,passwordHash,passwordSalt,tier,registeredDate",
                     new Customer().getCsvHeader());
         }
 

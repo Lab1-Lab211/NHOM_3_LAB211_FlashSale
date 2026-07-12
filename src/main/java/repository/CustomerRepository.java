@@ -5,6 +5,7 @@ import model.enums.CustomerTier;
 
 import java.util.List;
 import java.util.Optional;
+import util.PasswordHasher;
 
 /**
  * Repository quản lý khách hàng ({@code customers.csv}).
@@ -25,6 +26,24 @@ public class CustomerRepository extends CsvRepository<Customer> {
      */
     public CustomerRepository(String filePath) {
         super(filePath, Customer::new);
+        migrateLegacyPasswords();
+    }
+
+    private void migrateLegacyPasswords() {
+        List<Customer> customers = findAll();
+        boolean changed = false;
+        for (Customer customer : customers) {
+            if (customer.getPasswordHash() == null || customer.getPasswordHash().isEmpty()
+                    || customer.getPasswordSalt() == null || customer.getPasswordSalt().isEmpty()) {
+                PasswordHasher.PasswordData data = PasswordHasher.hash(PasswordHasher.DEFAULT_PASSWORD);
+                customer.setPasswordHash(data.getHash());
+                customer.setPasswordSalt(data.getSalt());
+                changed = true;
+            }
+        }
+        if (changed) {
+            rewriteAll(customers);
+        }
     }
 
     // -----------------------------------------------------------------------

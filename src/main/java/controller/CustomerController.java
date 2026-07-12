@@ -19,8 +19,21 @@ public class CustomerController {
         return currentCustomer;
     }
 
+    public Customer register(String name, String email, String password) {
+        currentCustomer = customerService.register(name, email, password);
+        return currentCustomer;
+    }
+
     public Optional<Customer> login(String email) {
         Optional<Customer> customer = customerService.login(email);
+        if (customer.isPresent()) {
+            currentCustomer = customer.get();
+        }
+        return customer;
+    }
+
+    public Optional<Customer> login(String email, String password) {
+        Optional<Customer> customer = customerService.login(email, password);
         if (customer.isPresent()) {
             currentCustomer = customer.get();
         }

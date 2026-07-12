@@ -24,6 +24,7 @@ import java.util.*;
  *   => TỔNG: 12,520 dòng (>= 10,000)
  */
 public class DataGenerator {
+    public static final String DEFAULT_CUSTOMER_PASSWORD = PasswordHasher.DEFAULT_PASSWORD;
 
     private static final Random random = new Random(42); // seed cố định để tái tạo
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -211,9 +212,11 @@ public class DataGenerator {
             // Ngày đăng ký: trong 2 năm gần đây
             LocalDate ngayDK = LocalDate.of(2024, 1, 1).plusDays(random.nextInt(730));
 
+            PasswordHasher.PasswordData passwordData = PasswordHasher.hash(DEFAULT_CUSTOMER_PASSWORD);
             ds.add(new Customer(
                     String.format("CUS-%05d", i),
-                    hoTen, email, tier, ngayDK.format(DATE_FMT)
+                    hoTen, email, passwordData.getHash(), passwordData.getSalt(),
+                    tier, ngayDK.format(DATE_FMT)
             ));
         }
         return ds;
