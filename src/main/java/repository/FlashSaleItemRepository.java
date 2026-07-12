@@ -120,6 +120,16 @@ public class FlashSaleItemRepository extends CsvRepository<FlashSaleItem> {
         rewriteAll(all);
     }
 
+    /** Hoan lai so luong da ban khi don hang cua nguoi mua bi huy. */
+    public synchronized void restoreSoldQuantity(String flashItemId, int quantity)
+            throws EntityNotFoundException {
+        FlashSaleItem item = findById(flashItemId)
+                .orElseThrow(() -> new EntityNotFoundException("FlashSaleItem", flashItemId));
+        item.setSoldQty(Math.max(0, item.getSoldQty() - Math.max(0, quantity)));
+        item.setVersion(item.getVersion() + 1);
+        update(item);
+    }
+
     // =======================================================================
     // 4 CƠ CHẾ ĐỒNG BỘ — LOGIC TRỪ KHO
     // =======================================================================

@@ -5,6 +5,9 @@ import controller.OrderController;
 import exception.FlashSaleException;
 import model.enums.LockMechanism;
 import service.BookingResult;
+import model.Order;
+
+import java.util.List;
 
 public class OrderView {
     private final OrderController orderController;
@@ -26,6 +29,43 @@ public class OrderView {
     public BookingResult placeOrderWithSelectedMechanism() {
         LockMechanism mechanism = readMechanism();
         return placeOrder(mechanism);
+    }
+
+    public BookingResult placeOrderSafely() {
+        return placeOrder(LockMechanism.SYNCHRONIZED);
+    }
+
+    public void showMyOrders() {
+        if (!customerController.isLoggedIn()) {
+            System.out.println("Vui long login de xem don hang.");
+            return;
+        }
+        List<Order> orders = orderController.getOrders(customerController.getCurrentCustomer());
+        if (orders.isEmpty()) {
+            System.out.println("Ban chua co don hang nao.");
+            return;
+        }
+        System.out.printf("%-12s %-12s %-20s %-18s %12s%n",
+                "Order ID", "Event ID", "Thoi gian", "Trang thai", "Tong tien");
+        for (Order order : orders) {
+            System.out.printf("%-12s %-12s %-20s %-18s %12.0f%n",
+                    order.getOrderId(), order.getEventId(), order.getOrderTime(),
+                    order.getStatus().getMoTa(), order.getTotalAmount());
+        }
+    }
+
+    public void cancelMyOrder() {
+        if (!customerController.isLoggedIn()) {
+            System.out.println("Vui long login de huy don hang.");
+            return;
+        }
+        String orderId = input.readLine("Nhap Order ID can huy: ").trim();
+        try {
+            Order order = orderController.cancelOrder(customerController.getCurrentCustomer(), orderId);
+            System.out.println("Huy don thanh cong. Trang thai: " + order.getStatus().getMoTa());
+        } catch (FlashSaleException | IllegalArgumentException | IllegalStateException e) {
+            System.out.println("Huy don that bai: " + e.getMessage());
+        }
     }
 
     private BookingResult placeOrder(LockMechanism mechanism) {

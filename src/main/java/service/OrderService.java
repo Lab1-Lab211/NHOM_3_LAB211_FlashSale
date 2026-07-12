@@ -85,6 +85,39 @@ public class OrderService {
         return placeOrder(customerId, CustomerTier.REGULAR, null, flashItemId, quantity, mechanism);
     }
 
+    public List<Order> getOrdersForCustomer(Customer customer) {
+        if (customer == null) throw new IllegalStateException("Vui long login de xem don hang");
+        return orderRepository.findByCustomer(customer.getCustomerId());
+    }
+
+    public Order cancelOrder(Customer customer, String orderId) throws EntityNotFoundException {
+        if (customer == null) throw new IllegalStateException("Vui long login de huy don hang");
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+        if (!order.getCustomerId().equalsIgnoreCase(customer.getCustomerId())) {
+            throw new IllegalArgumentException("Ban khong co quyen huy don hang nay");
+        }
+        if (order.getStatus() == OrderStatus.DA_HUY) {
+            throw new IllegalArgumentException("Don hang da duoc huy truoc do");
+        }
+        if (order.getStatus() == OrderStatus.THAT_BAI) {
+            throw new IllegalArgumentException("Khong the huy don hang that bai");
+        }
+
+        for (OrderDetail detail : orderDetailRepository.findByOrder(orderId)) {
+            flashSaleItemRepository.restoreSoldQuantity(detail.getFlashItemId(), detail.getQuantity());
+        }
+        order.setStatus(OrderStatus.DA_HUY);
+        orderRepository.update(order);
+
+        if (customerRepository != null) {
+            CustomerTier recalculated = calculateTierByTotalSpent(totalConfirmedSpent(customer.getCustomerId()));
+            customer.setTier(recalculated);
+            customerRepository.update(customer);
+        }
+        return order;
+    }
+
     private BookingResult placeOrder(String customerId, CustomerTier tierBeforeOrder,
                                      Customer customerToUpdate, String flashItemId, int quantity,
                                      LockMechanism mechanism)

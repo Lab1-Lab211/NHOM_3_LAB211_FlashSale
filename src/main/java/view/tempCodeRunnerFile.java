@@ -1,0 +1,2 @@
+
+    private final SimulatorView simulatorView;

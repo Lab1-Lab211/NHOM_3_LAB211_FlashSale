@@ -1,7 +1,9 @@
 package model.enums;
 
 public enum UserRole {
-    CUSTOMER("Customer");
+    CUSTOMER("Nguoi mua"),
+    SELLER("Nguoi ban"),
+    ADMIN("Quan tri vien");
 
     private final String displayName;
 

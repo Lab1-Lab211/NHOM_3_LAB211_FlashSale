@@ -34,6 +34,18 @@ public class FlashSaleController {
         return flashSaleService.listActiveEvents();
     }
 
+    public List<FlashSaleEvent> getPendingApprovalEvents() {
+        return flashSaleService.listPendingApprovalEvents();
+    }
+
+    public Optional<FlashSaleEvent> approveEvent(String eventId) {
+        return flashSaleService.approveEvent(eventId);
+    }
+
+    public Optional<FlashSaleEvent> rejectEvent(String eventId) {
+        return flashSaleService.rejectEvent(eventId);
+    }
+
     public List<FlashSaleItem> getAllItems() {
         return flashSaleService.getAllItems();
     }

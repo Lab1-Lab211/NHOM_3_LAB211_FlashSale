@@ -34,6 +34,7 @@ public class OrderServiceTest {
         cleanupSet("inactive");
         cleanupSet("limit");
         cleanupSet("tier");
+        cleanupSet("cancel");
     }
 
     @Test
@@ -94,6 +95,22 @@ public class OrderServiceTest {
         assertEquals(190000.0, result.getOrder().getTotalAmount(), 0.01);
         assertEquals(CustomerTier.VIP, result.getTierAfterOrder());
         assertEquals(CustomerTier.VIP, customer.getTier());
+    }
+
+    @Test
+    public void customerCanViewAndCancelOwnOrderAndStockIsRestored() throws Exception {
+        TestRepos repos = createRepos("cancel");
+        Customer customer = new Customer(
+                "CUS-TEST", "Nguyen Van A", "cancel@email.com", CustomerTier.REGULAR, "2026-01-01");
+        repos.customerRepository.save(customer);
+
+        BookingResult result = repos.orderService.placeOrderNoLock(customer, "FSI-TEST", 2);
+        assertEquals(1, repos.orderService.getOrdersForCustomer(customer).size());
+        assertEquals(2, repos.itemRepository.findById("FSI-TEST").get().getSoldQty());
+
+        Order cancelled = repos.orderService.cancelOrder(customer, result.getOrder().getOrderId());
+        assertEquals(OrderStatus.DA_HUY, cancelled.getStatus());
+        assertEquals(0, repos.itemRepository.findById("FSI-TEST").get().getSoldQty());
     }
 
     private TestRepos createRepos(String suffix) {

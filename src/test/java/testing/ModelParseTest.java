@@ -647,9 +647,11 @@ public class ModelParseTest {
         }
 
         @Test
-        @DisplayName("SaleStatus: có đúng 3 giá trị và valueOf đúng")
+        @DisplayName("SaleStatus: có đủ trạng thái phê duyệt và vận hành")
         void saleStatus() {
-            assertEquals(3, SaleStatus.values().length);
+            assertEquals(5, SaleStatus.values().length);
+            assertEquals(SaleStatus.CHO_PHE_DUYET, SaleStatus.valueOf("CHO_PHE_DUYET"));
+            assertEquals(SaleStatus.TU_CHOI, SaleStatus.valueOf("TU_CHOI"));
             assertEquals(SaleStatus.SAP_DIEN_RA, SaleStatus.valueOf("SAP_DIEN_RA"));
             assertEquals(SaleStatus.DANG_DIEN_RA, SaleStatus.valueOf("DANG_DIEN_RA"));
             assertEquals(SaleStatus.DA_KET_THUC, SaleStatus.valueOf("DA_KET_THUC"));

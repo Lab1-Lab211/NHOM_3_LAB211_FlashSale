@@ -3,7 +3,7 @@
 > **Dự án:** E-Commerce Flash Sale Simulation (LAB211)  
 > **Phiên bản:** 1.0  
 > **Ngày tạo:** 19/05/2026  
-> **Tổng số file CSV:** 7 file  
+> **Tổng số file CSV:** 8 file
 > **Tổng dữ liệu sinh bởi DataGenerator:** ≥ 12,520 dòng  
 
 ---
@@ -19,6 +19,7 @@
 | 5 | `orders.csv` | `Order` | 2,500 | `orderId` | `customerId`, `eventId` |
 | 6 | `order_details.csv` | `OrderDetail` | 2,500 | `detailId` | `orderId`, `flashItemId` |
 | 7 | `transactions.csv` | `OrderTransaction` | *(sinh bởi Simulator)* | `transactionId` | `orderId` |
+| 8 | `sellers.csv` | `Seller` | *(tạo từ giao diện)* | `sellerId` | `productIds`, `eventIds` |
 
 ---
 
@@ -31,6 +32,7 @@ flash_events.csv ──────────┤                          ├�
                            ├──→ orders.csv ───────────┘
 customers.csv ─────────────┘         │
                                      └──→ transactions.csv
+sellers.csv ──→ products.csv / flash_events.csv
 ```
 
 ---
@@ -249,13 +251,27 @@ TXN-00002,ORD-00456,NO_LOCK,Thread-7,123456789212345,123456789312345,false,Hết
 
 ---
 
+## 8. `sellers.csv` — Tài khoản người bán
+
+> **Entity:** `Seller` | **Encoding:** UTF-8
+
+```csv
+sellerId,name,email,passwordHash,passwordSalt,productIds,eventIds,registeredDate
+```
+
+- `passwordHash` và `passwordSalt`: mật khẩu PBKDF2, không lưu plaintext.
+- `productIds`: các Product ID thuộc người bán, phân cách bằng dấu `;`.
+- `eventIds`: các Event ID do người bán tạo, phân cách bằng dấu `;`.
+
+---
+
 ## 📎 Phụ lục: Tổng hợp Enum
 
 | Enum | Thuộc Entity | Các giá trị |
 |---|---|---|
 | `ProductCategory` | Product | `DIEN_TU`, `THOI_TRANG`, `GIA_DUNG`, `LAM_DEP`, `THUC_PHAM`, `THE_THAO` |
 | `CustomerTier` | Customer | `VIP`, `PREMIUM`, `REGULAR` |
-| `SaleStatus` | FlashSaleEvent | `SAP_DIEN_RA`, `DANG_DIEN_RA`, `DA_KET_THUC` |
+| `SaleStatus` | FlashSaleEvent | `CHO_PHE_DUYET`, `TU_CHOI`, `SAP_DIEN_RA`, `DANG_DIEN_RA`, `DA_KET_THUC` |
 | `OrderStatus` | Order | `CHO_XU_LY`, `DA_XAC_NHAN`, `THAT_BAI`, `DA_HUY` |
 | `LockMechanism` | OrderTransaction | `NO_LOCK`, `FILE_LOCK`, `SYNCHRONIZED`, `OPTIMISTIC` |
 | `PaymentMethod` | *(chưa sử dụng)* | `THE_TIN_DUNG`, `VI_DIEN_TU`, `THANH_TOAN_KHI_NHAN` |

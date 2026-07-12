@@ -46,6 +46,10 @@ public class FlashSaleItemService {
         return result;
     }
 
+    public List<FlashSaleItem> listItemsByEvent(String eventId) {
+        return flashSaleItemRepository.findByEvent(eventId);
+    }
+
     public Optional<FlashSaleItem> findById(String flashItemId) {
         return flashSaleItemRepository.findById(flashItemId);
     }

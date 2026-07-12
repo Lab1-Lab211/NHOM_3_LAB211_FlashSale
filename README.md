@@ -56,6 +56,18 @@ Tài khoản do `DataGenerator` sinh sử dụng mật khẩu mặc định `Fla
 Tài khoản tạo từ giao diện được tự chọn mật khẩu tối thiểu 6 ký tự. CSV chỉ lưu
 PBKDF2 hash và salt, không lưu mật khẩu gốc.
 
+Hệ thống có ba cổng role khi khởi động: Người mua, Người bán và Admin.
+Người bán tự đăng ký/đăng nhập; tài khoản được lưu an toàn trong `data/sellers.csv`.
+Tài khoản Admin cố định (không lưu CSV):
+
+```text
+Email: admin@gmail.com
+Password: 123456
+```
+
+Flash Sale do người bán tạo có trạng thái `CHO_PHE_DUYET`; Admin phải phê duyệt
+trước khi có thể bắt đầu sự kiện. Simulator chỉ nằm trong menu Admin.
+
 ## Cơ chế Lock
 
 | Mechanism     | Mô tả                        |

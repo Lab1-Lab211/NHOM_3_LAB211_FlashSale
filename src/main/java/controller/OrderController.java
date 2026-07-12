@@ -10,6 +10,9 @@ import model.enums.LockMechanism;
 import service.BookingResult;
 import service.OrderService;
 
+import java.util.List;
+import model.Order;
+
 public class OrderController {
     private final OrderService orderService;
 
@@ -30,5 +33,13 @@ public class OrderController {
             throw new IllegalStateException("Vui long login truoc khi dat hang");
         }
         return orderService.placeOrder(customer, flashItemId, quantity, mechanism);
+    }
+
+    public List<Order> getOrders(Customer customer) {
+        return orderService.getOrdersForCustomer(customer);
+    }
+
+    public Order cancelOrder(Customer customer, String orderId) throws EntityNotFoundException {
+        return orderService.cancelOrder(customer, orderId);
     }
 }

@@ -43,6 +43,40 @@ public class FlashSaleService {
         return flashSaleEventRepository.findDangDienRa();
     }
 
+    public List<FlashSaleEvent> listPendingApprovalEvents() {
+        return flashSaleEventRepository.findByStatus(SaleStatus.CHO_PHE_DUYET);
+    }
+
+    public Optional<FlashSaleEvent> approveEvent(String eventId) {
+        Optional<FlashSaleEvent> found = flashSaleEventRepository.findById(eventId);
+        if (!found.isPresent()) return Optional.empty();
+        FlashSaleEvent event = found.get();
+        if (event.getStatus() != SaleStatus.CHO_PHE_DUYET) {
+            throw new IllegalArgumentException("Chi phe duyet Flash Sale dang cho duyet");
+        }
+        if (flashSaleItemService.listItemsByEvent(eventId).isEmpty()) {
+            throw new IllegalArgumentException("Flash Sale chua co hang hoa de phe duyet");
+        }
+        event.setStatus(SaleStatus.SAP_DIEN_RA);
+        flashSaleEventRepository.update(event);
+        return Optional.of(event);
+    }
+
+    public Optional<FlashSaleEvent> rejectEvent(String eventId) {
+        Optional<FlashSaleEvent> found = flashSaleEventRepository.findById(eventId);
+        if (!found.isPresent()) return Optional.empty();
+        FlashSaleEvent event = found.get();
+        if (event.getStatus() != SaleStatus.CHO_PHE_DUYET) {
+            throw new IllegalArgumentException("Chi tu choi Flash Sale dang cho duyet");
+        }
+        for (FlashSaleItem item : flashSaleItemService.listItemsByEvent(eventId)) {
+            flashSaleItemService.deleteItem(item.getFlashItemId());
+        }
+        event.setStatus(SaleStatus.TU_CHOI);
+        flashSaleEventRepository.update(event);
+        return Optional.of(event);
+    }
+
     public List<FlashSaleItem> listActiveAvailableItems() {
         return flashSaleItemService.listActiveAvailableItems();
     }
@@ -64,6 +98,10 @@ public class FlashSaleService {
     }
 
     public Optional<FlashSaleEvent> startEvent(String eventId) {
+        Optional<FlashSaleEvent> event = flashSaleEventRepository.findById(eventId);
+        if (event.isPresent() && event.get().getStatus() != SaleStatus.SAP_DIEN_RA) {
+            throw new IllegalArgumentException("Chi duoc bat dau Flash Sale da duoc phe duyet");
+        }
         return changeStatus(eventId, SaleStatus.DANG_DIEN_RA);
     }
 
