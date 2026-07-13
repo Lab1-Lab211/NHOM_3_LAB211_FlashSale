@@ -658,9 +658,9 @@ public class ModelParseTest {
         }
 
         @Test
-        @DisplayName("OrderStatus: có đúng 4 giá trị và getMoTa() không null")
+        @DisplayName("OrderStatus: có đúng 7 giá trị và getMoTa() không null")
         void orderStatus() {
-            assertEquals(4, OrderStatus.values().length);
+            assertEquals(7, OrderStatus.values().length);
             for (OrderStatus status : OrderStatus.values()) {
                 assertNotNull(status.getMoTa(), status.name() + ".getMoTa() không được null");
             }

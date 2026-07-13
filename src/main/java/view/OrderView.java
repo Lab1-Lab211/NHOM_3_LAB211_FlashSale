@@ -32,7 +32,17 @@ public class OrderView {
     }
 
     public BookingResult placeOrderSafely() {
-        return placeOrder(LockMechanism.SYNCHRONIZED);
+        if (!customerController.isLoggedIn()) {
+            System.out.println("Vui long login hoac register truoc.");
+            return null;
+        }
+        System.out.println("1. Dat san pham Flash Sale (FSI-...)");
+        System.out.println("2. Dat san pham thuong (PRD-...)");
+        int choice = input.readInt("Chon loai don hang: ");
+        if (choice == 1) return placeOrder(LockMechanism.SYNCHRONIZED);
+        if (choice == 2) return placeRegularProductOrder();
+        System.out.println("Loai don hang khong hop le.");
+        return null;
     }
 
     public void showMyOrders() {
@@ -82,6 +92,18 @@ public class OrderView {
                     customerController.getCurrentCustomer(), flashItemId, quantity, mechanism);
         } catch (FlashSaleException | IllegalArgumentException | IllegalStateException e) {
             System.out.println("Dat hang that bai: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private BookingResult placeRegularProductOrder() {
+        String productId = input.readLine("Nhap productId (PRD-...): ").trim();
+        int quantity = input.readInt("Nhap so luong: ");
+        try {
+            return orderController.placeRegularProductOrder(
+                    customerController.getCurrentCustomer(), productId, quantity);
+        } catch (FlashSaleException | IllegalArgumentException | IllegalStateException e) {
+            System.out.println("Dat san pham thuong that bai: " + e.getMessage());
             return null;
         }
     }

@@ -14,8 +14,10 @@ public class ReportView {
         System.out.println(result.getMessage());
         System.out.println("Order ID      : " + result.getOrder().getOrderId());
         System.out.println("Customer ID   : " + result.getOrder().getCustomerId());
+        System.out.println("Order type    : "
+                + (result.getFlashSaleItem() == null ? "REGULAR PRODUCT" : "FLASH SALE"));
         System.out.println("Event ID      : " + result.getOrder().getEventId());
-        System.out.println("Flash Item ID : " + result.getOrderDetail().getFlashItemId());
+        System.out.println("Item ID       : " + result.getOrderDetail().getFlashItemId());
         System.out.println("Quantity      : " + result.getOrderDetail().getQuantity());
         System.out.printf("Unit price    : %.0f%n", result.getOrderDetail().getUnitPrice());
         if (result.getTierBeforeOrder() != null) {
@@ -26,7 +28,9 @@ public class ReportView {
             System.out.println("Tier after    : " + result.getTierAfterOrder());
         }
         System.out.printf("Total amount  : %.0f%n", result.getOrder().getTotalAmount());
-        System.out.println("Sold quantity : " + result.getFlashSaleItem().getSoldQty());
-        System.out.println("Item version  : " + result.getFlashSaleItem().getVersion());
+        if (result.getFlashSaleItem() != null) {
+            System.out.println("Sold quantity : " + result.getFlashSaleItem().getSoldQty());
+            System.out.println("Item version  : " + result.getFlashSaleItem().getVersion());
+        }
     }
 }

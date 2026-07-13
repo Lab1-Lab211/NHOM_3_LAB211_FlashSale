@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Use Case Diagram - Three-Role Flash Sale System</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{color-scheme:dark;--bg:#0f1117;--panel:#151824;--line:#2e3350;--text:#e8e6e0;--muted:#7d8499;--seller:#1D9E75;--sellerText:#9FE1CB;--buyer:#378ADD;--buyerText:#B5D4F4;--admin:#E24B4A;--adminText:#F7C1C1;--cross:#A78BFA;--include:#D97706}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI",Arial,sans-serif;overflow-x:auto}
+header{position:sticky;top:0;z-index:10;min-width:1580px;padding:14px 28px;background:rgba(15,17,23,.96);border-bottom:1px solid #1e2130;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(8px)}
+h1{font-size:16px}.sub{margin-top:3px;color:var(--muted);font:11px Consolas,monospace}.badges{display:flex;gap:7px}.badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700}.s{background:#0d3c2e;color:var(--sellerText)}.b{background:#12375d;color:var(--buyerText)}.a{background:#512020;color:var(--adminText)}.c{background:#341a5d;color:#ddd6fe}
+.canvas{padding:18px 24px;min-width:1580px}svg{display:block;margin:auto}.tooltip{position:fixed;z-index:20;max-width:290px;padding:8px 11px;border:1px solid var(--line);border-radius:7px;background:#1e2130;color:var(--text);font-size:11px;line-height:1.45;pointer-events:none;opacity:0;transition:opacity .12s;box-shadow:0 8px 28px #0008}
+.hint{position:fixed;right:20px;bottom:16px;padding:6px 10px;border:1px solid #292e43;border-radius:6px;background:#131621;color:#6f778d;font:10px Consolas,monospace}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Use Case Diagram — Flash Sale System</h1><div class="sub">3 Actors · Seller / Buyer / Admin · Features implemented in the current source code</div></div>
+  <div class="badges"><span class="badge s">Seller</span><span class="badge b">Buyer</span><span class="badge a">Admin</span><span class="badge c">Cross-Actor Flow</span></div>
+</header>
+<div class="canvas">
+<svg id="diagram" viewBox="0 0 1580 1320" width="1580" height="1320" xmlns="http://www.w3.org/2000/svg" aria-label="Use Case diagram for a three-role Flash Sale system">
+  <defs>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#1c1f2e"/></pattern>
+    <marker id="arrowCross" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#A78BFA" stroke-width="1.5"/></marker>
+    <marker id="arrowInclude" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#D97706" stroke-width="1.5"/></marker>
+  </defs>
+  <rect width="1580" height="1320" fill="#0f1117"/><rect width="1580" height="1320" fill="url(#dots)"/>
+  <text x="790" y="28" text-anchor="middle" font-size="17" font-weight="700" fill="#e8e6e0">FLASH SALE MANAGEMENT SYSTEM — USE CASE DIAGRAM</text>
+  <text x="790" y="47" text-anchor="middle" font-family="Consolas,monospace" font-size="10" fill="#596075">Authentication · Product Management · Flash Sale Approval · Ordering · Four-Locking-Mechanism Simulator</text>
+  <g id="areas"></g><g id="actors"></g><g id="associations"></g><g id="groups"></g><g id="cross"></g>
+</svg>
+</div>
+<div class="tooltip" id="tooltip"></div><div class="hint">Hover over a use case to view its description</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+const roles={
+ seller:{x:20,w:500,color:"#1D9E75",text:"#9FE1CB",fill:"#0d2419",ellipse:"#112b1f",title:"« SELLER AREA »",actor:"Seller",actorX:84},
+ buyer:{x:540,w:500,color:"#378ADD",text:"#B5D4F4",fill:"#071526",ellipse:"#0b1e33",title:"« BUYER AREA »",actor:"Buyer",actorX:604},
+ admin:{x:1060,w:500,color:"#E24B4A",text:"#F7C1C1",fill:"#220c0c",ellipse:"#2d0f0f",title:"« ADMIN AREA »",actor:"Admin",actorX:1496}
+};
+const data={
+ seller:[
+  {title:"[S1] Seller Account",y:160,items:[
+   ["Register Seller","Create a seller account in sellers.csv; the password is stored as a secure hash."],["Log In as Seller","Verify the email and password before entering the Seller Portal."],["Log Out","End the current seller session."]]},
+  {title:"[S2] Product Management",y:310,items:[
+   ["View My Products","View products owned by the current seller."],["Add New Product","Create a product in products.csv and assign it to the current seller."]]},
+  {title:"[S3] Flash Sale Management",y:430,items:[
+   ["View Sales and Status","View owned events with PENDING APPROVAL, UPCOMING, ACTIVE, ENDED, or REJECTED status."],["Create and Submit Sale","Create a Flash Sale event and submit it to the Admin for review."],["View Flash Sale Details","View the event name, schedule, discount, and current status."],["View Flash Sale Items","View the FlashSaleItem entries assigned to an event."],["Edit Event Information","Edit the name, schedule, or discount while the event is editable."],["Add Product to Sale","Add a seller-owned product to the Flash Sale event."],["Remove Product from Sale","Remove a product from the event and restore its reserved stock."],["Resubmit for Approval","Resubmit a rejected event after editing it and adding at least one item."]]},
+  {title:"[S4] Order Management",y:690,items:[
+   ["View Received Orders","View orders containing products from the seller's Flash Sale events."],["View Order Details","View the buyer, products, quantities, prices, totals, and current order status."],["Update Order Status","Move an order through CONFIRMED, PREPARING, SHIPPING, and COMPLETED."]]},
+ ],
+ buyer:[
+  {title:"[B1] Buyer Account",y:160,items:[
+   ["Register Buyer","Create a customer account; the password is hashed before being stored."],["Log In as Buyer","Authenticate the account to access ordering and order-management features."],["Log Out","End the current buyer session."]]},
+  {title:"[B2] Product Discovery",y:310,items:[
+   ["View On-Sale Products","Display products belonging to currently active Flash Sale events."],["Search by Name or ID","Perform an accent-insensitive search by product name or productId without requiring login."],["Filter by Category","Filter all products by category and display their on-sale or not-on-sale label."],["Filter by Price Range","Filter all products by price and display their sale status."],["Group Sale / Non-Sale","Separate search and filter results into clear sale and non-sale groups."]]},
+  {title:"[B3] Order Management",y:560,items:[
+   ["Place Order","Choose either a Flash Sale item (FSI) or a regular product (PRD), then safely update the corresponding inventory."],["View Order Status / History","View the current buyer's orders and their latest statuses."],["Cancel Order","Cancel an eligible order owned by the buyer and restore its Flash Sale or regular-product inventory."],["View Latest Order Result","View the success or failure result of the most recent ordering attempt."]]},
+ ],
+ admin:[
+  {title:"[A1] Admin Authentication",y:160,items:[
+   ["Log In as Admin","Log in with the system's fixed administrator account."],["Log Out","Exit the Admin Portal."]]},
+  {title:"[A2] Flash Sale Approval",y:280,items:[
+   ["View Pending Requests","List Flash Sale events currently in PENDING APPROVAL status."],["Approve Flash Sale","Move a valid event to UPCOMING status."],["Reject Flash Sale","Move an event to REJECTED, record the reason, and allow the seller to edit and resubmit it."],["View All Flash Sales","Monitor all events and their statuses across the system."]]},
+  {title:"[A3] Flash Sale Lifecycle",y:500,items:[
+   ["Start Approved Flash Sale","Manually move an event from UPCOMING to ACTIVE for testing or operation."],["End Flash Sale","Move an active event to ENDED status."]]},
+  {title:"[A4] Concurrency Simulator",y:620,items:[
+   ["Run Four-Lock Simulator","Create concurrent buyer threads and compare correctness and performance."],["NO_LOCK","Use no lock; it is fast but susceptible to lost updates and inventory violations."],["FILE_LOCK","Lock a shared file; its broad scope protects data but may reduce throughput."],["SYNCHRONIZED","Lock inside one JVM and serialize the critical inventory-update section."],["OPTIMISTIC","Use a version field to detect conflicts; conflicting transactions fail or require a retry."],["View Simulator Report","Compare OK, Fail, Sold, LostUpdate, Oversold, TPS, vs Baseline, and Violation%."]]},
+ ]
+};
+function el(name,attrs={},text){const n=document.createElementNS(NS,name);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,v);if(text!==undefined)n.textContent=text;return n}
+function add(parent,name,attrs,text){const n=el(name,attrs,text);parent.appendChild(n);return n}
+function drawArea(key,r){const g=document.getElementById("areas");add(g,"rect",{x:r.x,y:62,width:r.w,height:940,rx:14,fill:r.color+"11",stroke:r.color,"stroke-width":1.5,"stroke-dasharray":"9 4"});add(g,"text",{x:r.x+r.w/2,y:88,"text-anchor":"middle","font-size":13,"font-weight":700,fill:r.color},r.title)}
+function drawActor(key,r){const g=document.getElementById("actors"),x=r.actorX,y=122;add(g,"circle",{cx:x,cy:y,r:19,fill:"none",stroke:r.color,"stroke-width":2.3});add(g,"line",{x1:x,y1:y+19,x2:x,y2:y+62,stroke:r.color,"stroke-width":2.3});add(g,"line",{x1:x,y1:y+34,x2:x-24,y2:y+50,stroke:r.color,"stroke-width":2.3});add(g,"line",{x1:x,y1:y+34,x2:x+24,y2:y+50,stroke:r.color,"stroke-width":2.3});add(g,"line",{x1:x,y1:y+62,x2:x-19,y2:y+86,stroke:r.color,"stroke-width":2.3});add(g,"line",{x1:x,y1:y+62,x2:x+19,y2:y+86,stroke:r.color,"stroke-width":2.3});add(g,"text",{x,y:y+108,"text-anchor":"middle","font-size":12,"font-weight":700,fill:r.color},r.actor)}
+function drawGroup(key,r,group,idx){const g=document.getElementById("groups"),leftActor=key!=="admin",boxX=leftActor?r.x+128:r.x+12,boxW=360,rowH=44,rows=Math.ceil(group.items.length/2),boxH=34+rows*rowH+10;add(g,"rect",{x:boxX,y:group.y,width:boxW,height:boxH,rx:9,fill:r.fill,stroke:r.color,"stroke-width":.8});add(g,"text",{x:boxX+14,y:group.y+20,"font-size":10,"font-weight":700,fill:r.color},group.title);
+ group.items.forEach((it,i)=>{const col=i%2,row=Math.floor(i/2),cx=boxX+96+col*174,cy=group.y+47+row*rowH,rx=82;const u=add(g,"ellipse",{cx,cy,rx,ry:17,fill:r.ellipse,stroke:r.color,"stroke-width":1.1,"data-title":it[0],"data-desc":it[1]});u.classList.add("usecase");const t=add(g,"text",{x:cx,y:cy+4,"text-anchor":"middle","font-size":10,"font-weight":600,fill:r.text,"pointer-events":"none"},it[0]);if(it[0].length>27)t.setAttribute("font-size","9");
+  if(idx===0){const a=document.getElementById("associations"),startX=leftActor?r.actorX+23:r.actorX-23,endX=leftActor?cx-rx:cx+rx;add(a,"line",{x1:startX,y1:170,x2:endX,y2:cy,stroke:r.color,"stroke-width":1,"stroke-opacity":.7})}
+ });}
+Object.entries(roles).forEach(([k,r])=>{drawArea(k,r);drawActor(k,r);data[k].forEach((grp,i)=>drawGroup(k,r,grp,i))});
+const cross=document.getElementById("cross");
+add(cross,"rect",{x:20,y:1025,width:1540,height:268,rx:13,fill:"#121520",stroke:"#4C1D95","stroke-width":1.1});add(cross,"text",{x:790,y:1051,"text-anchor":"middle","font-size":13,"font-weight":700,fill:"#A78BFA"},"« CROSS-ACTOR BUSINESS FLOW »");
+const steps=[{x:74,c:"#1D9E75",t:"1. Seller",d:"Create Flash Sale\nand add products"},{x:330,c:"#A78BFA",t:"2. Submit",d:"Status:\nPENDING APPROVAL"},{x:586,c:"#E24B4A",t:"3. Admin",d:"Approve\nor reject"},{x:842,c:"#A78BFA",t:"4. Lifecycle",d:"UPCOMING →\nACTIVE"},{x:1098,c:"#378ADD",t:"5. Buyer",d:"View sale and\nplace order"},{x:1354,c:"#D97706",t:"6. Result",d:"Update inventory,\norders, and reports"}];
+steps.forEach((s,i)=>{add(cross,"rect",{x:s.x,y:1080,width:152,height:104,rx:10,fill:s.c+"18",stroke:s.c,"stroke-width":1.2});add(cross,"text",{x:s.x+76,y:1105,"text-anchor":"middle","font-size":11,"font-weight":700,fill:s.c},s.t);s.d.split("\n").forEach((line,j)=>add(cross,"text",{x:s.x+76,y:1137+j*18,"text-anchor":"middle","font-size":10,fill:"#c9cbd3"},line));if(i<steps.length-1)add(cross,"path",{d:`M${s.x+154} 1132 H${steps[i+1].x-8}`,fill:"none",stroke:"#A78BFA","stroke-width":1.4,"stroke-dasharray":"7 4","marker-end":"url(#arrowCross)"})});
+add(cross,"path",{d:"M738 1188 C700 1250 390 1250 390 1188",fill:"none",stroke:"#A78BFA","stroke-width":1.2,"stroke-dasharray":"6 4","marker-end":"url(#arrowCross)"});add(cross,"text",{x:560,y:1242,"text-anchor":"middle","font-family":"Consolas,monospace","font-size":9,fill:"#A78BFA"},"REJECTED → seller edits the event → resubmits it");
+add(cross,"line",{x1:1110,y1:1270,x2:1150,y2:1270,stroke:"#D97706","stroke-width":1.5,"stroke-dasharray":"5 3"});add(cross,"text",{x:1160,y:1274,"font-size":10,fill:"#aaa"},"«include»: Simulator contains four locking mechanisms and report metrics");
+const tip=document.getElementById("tooltip");document.querySelectorAll(".usecase").forEach(u=>{u.addEventListener("mousemove",e=>{tip.innerHTML=`<b>${u.dataset.title}</b><br>${u.dataset.desc}`;tip.style.left=(e.clientX+14)+"px";tip.style.top=(e.clientY-8)+"px";tip.style.opacity=1});u.addEventListener("mouseleave",()=>tip.style.opacity=0)});
+</script>
+</body>
+</html>

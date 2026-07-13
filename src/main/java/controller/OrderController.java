@@ -39,6 +39,11 @@ public class OrderController {
         return orderService.getOrdersForCustomer(customer);
     }
 
+    public BookingResult placeRegularProductOrder(Customer customer, String productId, int quantity)
+            throws EntityNotFoundException, OutOfStockException {
+        return orderService.placeRegularProductOrder(customer, productId, quantity);
+    }
+
     public Order cancelOrder(Customer customer, String orderId) throws EntityNotFoundException {
         return orderService.cancelOrder(customer, orderId);
     }

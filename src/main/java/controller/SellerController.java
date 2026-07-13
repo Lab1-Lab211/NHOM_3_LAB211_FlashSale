@@ -3,8 +3,13 @@ package controller;
 import model.FlashSaleEvent;
 import model.FlashSaleItem;
 import model.Product;
+import model.Order;
+import model.OrderDetail;
 import model.Seller;
+import model.enums.OrderStatus;
 import model.enums.ProductCategory;
+import exception.EntityNotFoundException;
+import service.OrderService;
 import service.SellerService;
 
 import java.util.Collections;
@@ -13,10 +18,16 @@ import java.util.Optional;
 
 public class SellerController {
     private final SellerService sellerService;
+    private final OrderService orderService;
     private Seller currentSeller;
 
     public SellerController(SellerService sellerService) {
+        this(sellerService, null);
+    }
+
+    public SellerController(SellerService sellerService, OrderService orderService) {
         this.sellerService = sellerService;
+        this.orderService = orderService;
     }
 
     public Seller register(String name, String email, String password) {
@@ -77,5 +88,37 @@ public class SellerController {
 
     public Optional<Product> findProductById(String productId) {
         return sellerService.findProductById(productId);
+    }
+
+    public List<Order> getReceivedOrders() {
+        requireOrderService();
+        return orderService.getOrdersForSeller(currentSeller);
+    }
+
+    public Order getReceivedOrder(String orderId) throws EntityNotFoundException {
+        requireOrderService();
+        return orderService.getOrderForSeller(currentSeller, orderId);
+    }
+
+    public List<OrderDetail> getReceivedOrderDetails(String orderId) throws EntityNotFoundException {
+        requireOrderService();
+        return orderService.getOrderDetailsForSeller(currentSeller, orderId);
+    }
+
+    public Optional<FlashSaleItem> findFlashItemById(String flashItemId) {
+        requireOrderService();
+        return orderService.findFlashSaleItem(flashItemId);
+    }
+
+    public Order updateOrderStatus(String orderId, OrderStatus status)
+            throws EntityNotFoundException {
+        requireOrderService();
+        return orderService.updateOrderStatusForSeller(currentSeller, orderId, status);
+    }
+
+    private void requireOrderService() {
+        if (orderService == null) {
+            throw new IllegalStateException("Chuc nang don hang nguoi ban chua duoc khoi tao");
+        }
     }
 }
