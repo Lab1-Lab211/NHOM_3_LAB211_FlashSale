@@ -35,6 +35,14 @@ public class OrderController {
         return orderService.placeOrder(customer, flashItemId, quantity, mechanism);
     }
 
+    public BookingResult placeNormalOrder(Customer customer, String productId, int quantity)
+            throws exception.EntityNotFoundException, exception.OutOfStockException {
+        if (customer == null) {
+            throw new IllegalStateException("Vui long login truoc khi dat hang");
+        }
+        return orderService.placeNormalOrder(customer, productId, quantity);
+    }
+
     public List<Order> getOrders(Customer customer) {
         return orderService.getOrdersForCustomer(customer);
     }

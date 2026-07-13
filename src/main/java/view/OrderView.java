@@ -74,15 +74,30 @@ public class OrderView {
             return null;
         }
 
-        String flashItemId = input.readLine("Nhap flashItemId: ").trim();
+        String id = input.readLine("Nhap ID san pham (FSI-xxxxx hoac PRD-xxxxx): ").trim();
         int quantity = input.readInt("Nhap so luong (1-2): ");
 
-        try {
-            return orderController.placeOrder(
-                    customerController.getCurrentCustomer(), flashItemId, quantity, mechanism);
-        } catch (FlashSaleException | IllegalArgumentException | IllegalStateException e) {
-            System.out.println("Dat hang that bai: " + e.getMessage());
-            return null;
+        boolean isFlashItem = id.toUpperCase().startsWith("FSI-");
+
+        if (isFlashItem) {
+            // --- Dat hang Flash Sale ---
+            try {
+                return orderController.placeOrder(
+                        customerController.getCurrentCustomer(), id, quantity, mechanism);
+            } catch (exception.FlashSaleException | IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Dat hang Flash Sale that bai: " + e.getMessage());
+                return null;
+            }
+        } else {
+            // --- Dat hang binh thuong (PRD-xxxxx hoac bat ky ID nao khac) ---
+            try {
+                return orderController.placeNormalOrder(
+                        customerController.getCurrentCustomer(), id, quantity);
+            } catch (exception.EntityNotFoundException | exception.OutOfStockException
+                    | IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Dat hang binh thuong that bai: " + e.getMessage());
+                return null;
+            }
         }
     }
 

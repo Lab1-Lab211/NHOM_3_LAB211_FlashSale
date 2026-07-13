@@ -26,7 +26,9 @@ public class ReportView {
             System.out.println("Tier after    : " + result.getTierAfterOrder());
         }
         System.out.printf("Total amount  : %.0f%n", result.getOrder().getTotalAmount());
-        System.out.println("Sold quantity : " + result.getFlashSaleItem().getSoldQty());
-        System.out.println("Item version  : " + result.getFlashSaleItem().getVersion());
+        if (result.getFlashSaleItem() != null) {
+            System.out.println("Sold quantity : " + result.getFlashSaleItem().getSoldQty());
+            System.out.println("Item version  : " + result.getFlashSaleItem().getVersion());
+        }
     }
 }

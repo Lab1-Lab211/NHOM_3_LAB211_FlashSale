@@ -10,6 +10,7 @@ import model.FlashSaleEvent;
 import model.FlashSaleItem;
 import model.Order;
 import model.OrderDetail;
+import model.Product;
 import model.enums.CustomerTier;
 import model.enums.LockMechanism;
 import model.enums.OrderStatus;
@@ -19,6 +20,7 @@ import repository.FlashSaleEventRepository;
 import repository.FlashSaleItemRepository;
 import repository.OrderDetailRepository;
 import repository.OrderRepository;
+import repository.ProductRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +40,7 @@ public class OrderService {
     private final FlashSaleItemRepository flashSaleItemRepository;
     private final FlashSaleEventRepository flashSaleEventRepository;
     private final CustomerRepository customerRepository;
+    private ProductRepository productRepository;
 
     public OrderService(OrderRepository orderRepository,
                         OrderDetailRepository orderDetailRepository,
@@ -56,6 +59,10 @@ public class OrderService {
         this.flashSaleItemRepository = flashSaleItemRepository;
         this.flashSaleEventRepository = flashSaleEventRepository;
         this.customerRepository = customerRepository;
+    }
+
+    public void setProductRepository(ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
 
     public BookingResult placeOrderNoLock(Customer customer, String flashItemId, int quantity)
@@ -88,6 +95,61 @@ public class OrderService {
     public List<Order> getOrdersForCustomer(Customer customer) {
         if (customer == null) throw new IllegalStateException("Vui long login de xem don hang");
         return orderRepository.findByCustomer(customer.getCustomerId());
+    }
+
+    /**
+     * Dat hang binh thuong (khong phai flash sale) bang productId.
+     * Su dung gia goc cua san pham, tru ton kho trong products.csv.
+     */
+    public BookingResult placeNormalOrder(Customer customer, String productId, int quantity)
+            throws EntityNotFoundException, OutOfStockException {
+        if (customer == null) throw new IllegalStateException("Vui long login truoc khi dat hang");
+        if (productRepository == null) throw new IllegalStateException("ProductRepository chua duoc khoi tao");
+        validateQuantity(quantity);
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product", productId));
+
+        if (product.getStock() < quantity) {
+            throw new OutOfStockException(productId, quantity, product.getStock());
+        }
+
+        // Tru ton kho
+        product.setStock(product.getStock() - quantity);
+        productRepository.update(product);
+
+        String orderId = nextOrderId();
+        String detailId = nextDetailId();
+        CustomerTier tier = customer.getTier();
+        double subtotalAmount = quantity * product.getOriginalPrice();
+        double discountPercent = discountPercentForTier(tier);
+        double discountAmount = subtotalAmount * discountPercent / 100.0;
+        double totalAmount = subtotalAmount - discountAmount;
+
+        // Dat hang binh thuong dung eventId = "NORMAL"
+        Order order = new Order(
+                orderId,
+                customer.getCustomerId(),
+                "NORMAL",
+                LocalDateTime.now().format(DATE_TIME_FORMATTER),
+                OrderStatus.DA_XAC_NHAN,
+                totalAmount);
+
+        // Dung productId truc tiep lam flashItemId cho order detail
+        OrderDetail detail = new OrderDetail(
+                detailId,
+                orderId,
+                productId,
+                quantity,
+                product.getOriginalPrice());
+
+        orderRepository.save(order);
+        orderDetailRepository.save(detail);
+        CustomerTier tierAfter = updateTierAfterSuccessfulOrder(customer, customer.getCustomerId());
+
+        // Tao mot BookingResult gia lap (khong co FlashSaleItem/Event)
+        return new BookingResult(order, detail, null, "Dat hang binh thuong thanh cong",
+                tier, tierAfter, subtotalAmount, discountPercent, discountAmount);
     }
 
     public Order cancelOrder(Customer customer, String orderId) throws EntityNotFoundException {
