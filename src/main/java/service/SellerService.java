@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class SellerService {
+    private static final java.util.regex.Pattern EMAIL_PATTERN =
+            java.util.regex.Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+
     private final SellerRepository sellerRepository;
     private final ProductRepository productRepository;
     private final FlashSaleEventRepository eventRepository;
@@ -41,6 +44,9 @@ public class SellerService {
     public Seller register(String name, String email, String password) {
         validateText(name, "Ten nguoi ban");
         validateText(email, "Email");
+        if (!EMAIL_PATTERN.matcher(email.trim()).matches()) {
+            throw new IllegalArgumentException("Dinh dang email khong hop le");
+        }
         if (password == null || password.trim().length() < 6) {
             throw new IllegalArgumentException("Mat khau phai co it nhat 6 ky tu");
         }

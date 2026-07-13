@@ -62,6 +62,10 @@ public class FlashSaleController {
         return flashSaleService.listActiveAvailableItems();
     }
 
+    public String getProductName(String productId) {
+        return flashSaleService.getProductName(productId);
+    }
+
     public List<FlashSaleItem> getActiveItemsByEvent(String eventId) {
         return flashSaleService.listActiveAvailableItemsByEvent(eventId);
     }

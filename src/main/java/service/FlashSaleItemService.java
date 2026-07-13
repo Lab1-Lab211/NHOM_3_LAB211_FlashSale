@@ -50,6 +50,12 @@ public class FlashSaleItemService {
         return flashSaleItemRepository.findByEvent(eventId);
     }
 
+    public String getProductName(String productId) {
+        return productRepository.findById(productId)
+                .map(Product::getName)
+                .orElse("N/A");
+    }
+
     public Optional<FlashSaleItem> findById(String flashItemId) {
         return flashSaleItemRepository.findById(flashItemId);
     }

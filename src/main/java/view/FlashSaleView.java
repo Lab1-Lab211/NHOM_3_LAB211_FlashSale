@@ -35,13 +35,15 @@ public class FlashSaleView {
             return items;
         }
 
-        System.out.printf("%-12s %-10s %-12s %-8s %-8s %-12s%n",
-                "FlashItem", "Event", "Product", "Limit", "Sold", "Price");
+        System.out.printf("%-12s %-10s %-12s %-30s %-8s %-8s %-12s%n",
+                "FlashItem", "Event", "Product ID", "Ten San Pham", "Limit", "Sold", "Price");
         for (FlashSaleItem item : items) {
-            System.out.printf("%-12s %-10s %-12s %-8d %-8d %-12.0f%n",
+            String productName = flashSaleController.getProductName(item.getProductId());
+            System.out.printf("%-12s %-10s %-12s %-30s %-8d %-8d %-12.0f%n",
                     item.getFlashItemId(),
                     item.getEventId(),
                     item.getProductId(),
+                    productName,
                     item.getLimitedQty(),
                     item.getSoldQty(),
                     item.getFlashPrice());

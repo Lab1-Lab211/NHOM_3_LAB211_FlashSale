@@ -81,6 +81,10 @@ public class FlashSaleService {
         return flashSaleItemService.listActiveAvailableItems();
     }
 
+    public String getProductName(String productId) {
+        return flashSaleItemService.getProductName(productId);
+    }
+
     public List<FlashSaleItem> listActiveAvailableItemsByEvent(String eventId) {
         return flashSaleItemService.listActiveAvailableItemsByEvent(eventId);
     }

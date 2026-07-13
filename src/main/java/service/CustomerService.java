@@ -79,6 +79,9 @@ public class CustomerService {
         return customerRepository.findAll();
     }
 
+    private static final java.util.regex.Pattern EMAIL_PATTERN =
+            java.util.regex.Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+
     private void validateRegisterInput(String customerId, String name, String email,
                                        String password, CustomerTier tier) {
         if (customerId == null || customerId.trim().isEmpty()) {
@@ -89,6 +92,9 @@ public class CustomerService {
         }
         if (email == null || email.trim().isEmpty()) {
             throw new IllegalArgumentException("Email khong duoc trong");
+        }
+        if (!EMAIL_PATTERN.matcher(email.trim()).matches()) {
+            throw new IllegalArgumentException("Dinh dang email khong hop le");
         }
         if (password == null || password.trim().length() < 6) {
             throw new IllegalArgumentException("Mat khau phai co it nhat 6 ky tu");

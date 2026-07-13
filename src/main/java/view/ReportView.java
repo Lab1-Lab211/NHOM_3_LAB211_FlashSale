@@ -5,9 +5,9 @@ import service.BookingResult;
 public class ReportView {
     public void showBookingResult(BookingResult result) {
         System.out.println();
-        System.out.println("=== KET QUA BOOKING ===");
+        System.out.println("=== KET QUA DAT HANG ===");
         if (result == null) {
-            System.out.println("Chua co booking thanh cong.");
+            System.out.println("Chua co dat hang thanh cong.");
             return;
         }
 

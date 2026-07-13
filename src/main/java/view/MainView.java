@@ -107,11 +107,20 @@ public class MainView {
             showRoleMenu();
             String choice = input.readLine("Chon role: ").trim();
             switch (choice) {
-                case "1": runBuyerPortal(); break;
-                case "2": sellerView.run(); break;
-                case "3": adminView.loginAndRun(); break;
-                case "0": running = false; break;
-                default: System.out.println("Lua chon khong hop le.");
+                case "1":
+                    runBuyerPortal();
+                    break;
+                case "2":
+                    sellerView.run();
+                    break;
+                case "3":
+                    adminView.loginAndRun();
+                    break;
+                case "0":
+                    running = false;
+                    break;
+                default:
+                    System.out.println("Lua chon khong hop le.");
             }
         }
         System.out.println("Tam biet.");
@@ -132,22 +141,47 @@ public class MainView {
             String choice = input.readLine("Chon: ").trim();
             try {
                 switch (choice) {
-                    case "1": register(); break;
-                    case "2": login(); break;
-                    case "3": flashSaleView.showActiveItems(); break;
-                    case "4": searchProductByName(); break;
-                    case "5": filterProductByCategory(); break;
-                    case "6": filterProductByPrice(); break;
+                    case "1":
+                        register();
+                        break;
+                    case "2":
+                        login();
+                        break;
+                    case "3":
+                        flashSaleView.showActiveItems();
+                        break;
+                    case "4":
+                        searchProductByName();
+                        break;
+                    case "5":
+                        filterProductByCategory();
+                        break;
+                    case "6":
+                        filterProductByPrice();
+                        break;
                     case "7":
                         lastBookingResult = orderView.placeOrderSafely();
                         reportView.showBookingResult(lastBookingResult);
                         break;
-                    case "8": orderView.showMyOrders(); break;
-                    case "9": orderView.cancelMyOrder(); break;
-                    case "10": reportView.showBookingResult(lastBookingResult); break;
-                    case "11": customerController.logout(); System.out.println("Da dang xuat nguoi mua."); break;
-                    case "0": customerController.logout(); running = false; break;
-                    default: System.out.println("Lua chon khong hop le.");
+                    case "8":
+                        orderView.showMyOrders();
+                        break;
+                    case "9":
+                        orderView.cancelMyOrder();
+                        break;
+                    case "10":
+                        reportView.showBookingResult(lastBookingResult);
+                        break;
+                    case "11":
+                        customerController.logout();
+                        System.out.println("Da dang xuat nguoi mua.");
+                        break;
+                    case "0":
+                        customerController.logout();
+                        running = false;
+                        break;
+                    default:
+                        System.out.println("Lua chon khong hop le.");
                 }
             } catch (IllegalArgumentException | IllegalStateException e) {
                 System.out.println("Thao tac that bai: " + e.getMessage());
@@ -159,7 +193,7 @@ public class MainView {
         System.out.println();
         System.out.println("===== CONG NGUOI MUA =====");
         if (customerController.isLoggedIn()) {
-            System.out.println("Dang login: " + customerController.getCurrentCustomer().getCustomerId()
+            System.out.println("Da login: " + customerController.getCurrentCustomer().getCustomerId()
                     + " - " + customerController.getCurrentCustomer().getName()
                     + " | Role: " + customerController.getCurrentRole().getDisplayName());
         } else {
@@ -203,8 +237,11 @@ public class MainView {
     }
 
     private double readDouble(String prompt) {
-        try { return Double.parseDouble(input.readLine(prompt).trim()); }
-        catch (NumberFormatException e) { throw new IllegalArgumentException("Gia khong hop le"); }
+        try {
+            return Double.parseDouble(input.readLine(prompt).trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Gia khong hop le");
+        }
     }
 
     private void printProducts(List<Product> products) {
@@ -222,12 +259,15 @@ public class MainView {
     }
 
     private void register() {
-        String name = input.readLine("Nhap ten: ").trim();
-        String email = input.readLine("Nhap email: ").trim();
-        String password = input.readPassword("Nhap mat khau (toi thieu 6 ky tu): ");
-        String confirmPassword = input.readPassword("Xac nhan mat khau: ");
-
         try {
+            String name = input.readLine("Nhap ten: ").trim();
+            String email = input.readLine("Nhap email: ").trim();
+            if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+                throw new IllegalArgumentException("Dinh dang email khong hop le");
+            }
+            String password = input.readPassword("Nhap mat khau (toi thieu 6 ky tu): ");
+            String confirmPassword = input.readPassword("Xac nhan mat khau: ");
+
             if (!password.equals(confirmPassword)) {
                 throw new IllegalArgumentException("Xac nhan mat khau khong khop");
             }
@@ -255,6 +295,9 @@ public class MainView {
         while (current != null) {
             if (Files.exists(current.resolve("pom.xml"))) {
                 return current.resolve("data");
+            }
+            if (Files.exists(current.resolve("NHOM_3_LAB211_FlashSale").resolve("pom.xml"))) {
+                return current.resolve("NHOM_3_LAB211_FlashSale").resolve("data");
             }
             current = current.getParent();
         }

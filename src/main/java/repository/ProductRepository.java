@@ -59,8 +59,20 @@ public class ProductRepository extends CsvRepository<Product> {
      * @return danh sách sản phẩm có tên chứa keyword
      */
     public List<Product> findByName(String keyword) {
-        String lowerKeyword = keyword.toLowerCase();
-        return findBy(p -> p.getName().toLowerCase().contains(lowerKeyword));
+        String normalizedKeyword = normalizeForSearch(keyword);
+        return findBy(p -> normalizeForSearch(p.getProductId()).contains(normalizedKeyword)
+                        || normalizeForSearch(p.getName()).contains(normalizedKeyword));
+    }
+
+    private String normalizeForSearch(String input) {
+        if (input == null) return "";
+        String temp = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD);
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(temp).replaceAll("")
+                .replace('đ', 'd')
+                .replace('Đ', 'D')
+                .toLowerCase()
+                .trim();
     }
 
     /**

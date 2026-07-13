@@ -90,6 +90,14 @@ public class CustomerServiceTest {
     }
 
     @Test
+    public void testRegisterInvalidEmailThrowsException() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            customerService.register("Nguyen Van A", "invalid-email");
+        });
+        assertTrue(exception.getMessage().contains("Dinh dang email khong hop le"));
+    }
+
+    @Test
     public void testLoginExistingEmailReturnsCustomer() {
         customerService.register("CUS-00001", "Nguyen Van A", "a.nguyen@email.com", CustomerTier.REGULAR);
 

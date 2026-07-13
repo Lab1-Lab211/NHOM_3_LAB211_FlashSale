@@ -67,7 +67,10 @@ public class SellerView {
     private void register() {
         try {
             String name = input.readLine("Nhap ten nguoi ban: ");
-            String email = input.readLine("Nhap email: ");
+            String email = input.readLine("Nhap email: ").trim();
+            if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+                throw new IllegalArgumentException("Dinh dang email khong hop le");
+            }
             String password = input.readPassword("Nhap mat khau (toi thieu 6 ky tu): ");
             String confirm = input.readPassword("Xac nhan mat khau: ");
             if (!password.equals(confirm)) throw new IllegalArgumentException("Mat khau xac nhan khong khop");
