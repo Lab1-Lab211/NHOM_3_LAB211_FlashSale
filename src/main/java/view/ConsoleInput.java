@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Scanner;
+import util.TextEncodingFixer;
 
 public class ConsoleInput {
     private final Scanner scanner = new Scanner(new InputStreamReader(System.in, StandardCharsets.UTF_8));
@@ -18,9 +19,9 @@ public class ConsoleInput {
         Console console = System.console();
         if (console != null) {
             String line = console.readLine();
-            return line == null ? "" : line;
+            return line == null ? "" : TextEncodingFixer.repairConsoleText(line);
         }
-        return scanner.nextLine();
+        return TextEncodingFixer.repairConsoleText(scanner.nextLine());
     }
 
     public String readPassword(String prompt) {
@@ -28,7 +29,8 @@ public class ConsoleInput {
         if (console == null) {
             // IDE consoles often do not expose java.io.Console, so masking is not
             // available there. Run the application in a real terminal/run.bat.
-            return readLine(prompt);
+            System.out.print(prompt);
+            return scanner.nextLine();
         }
 
         char[] passwordChars = console.readPassword("%s", prompt);

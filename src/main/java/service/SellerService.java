@@ -11,6 +11,7 @@ import repository.FlashSaleItemRepository;
 import repository.ProductRepository;
 import repository.SellerRepository;
 import util.PasswordHasher;
+import util.TextEncodingFixer;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -128,8 +129,9 @@ public class SellerService {
         }
         FlashSaleEvent event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale"));
-        if (event.getStatus() != SaleStatus.CHO_PHE_DUYET) {
-            throw new IllegalArgumentException("Chi duoc them hang khi Flash Sale dang cho phe duyet");
+        if (event.getStatus() != SaleStatus.CHO_PHE_DUYET
+                && event.getStatus() != SaleStatus.TU_CHOI) {
+            throw new IllegalArgumentException("Chi duoc them hang khi Flash Sale cho duyet hoac bi tu choi");
         }
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay san pham"));
@@ -159,6 +161,85 @@ public class SellerService {
         return itemRepository.findByEvent(eventId);
     }
 
+    public Optional<FlashSaleEvent> findOwnEvent(Seller seller, String eventId) {
+        requireSeller(seller);
+        if (!seller.ownsEvent(eventId)) return Optional.empty();
+        return eventRepository.findById(eventId);
+    }
+
+    public FlashSaleEvent updateOwnEvent(Seller seller, String eventId, String name,
+                                          String startTime, String endTime, Integer discountPercent) {
+        FlashSaleEvent event = requireEditableEvent(seller, eventId);
+        String newName = name == null || name.trim().isEmpty() ? event.getEventName() : cleanCsvText(name);
+        String newStartText = startTime == null || startTime.trim().isEmpty()
+                ? event.getStartTime() : startTime.trim();
+        String newEndText = endTime == null || endTime.trim().isEmpty()
+                ? event.getEndTime() : endTime.trim();
+        int newDiscount = discountPercent == null ? event.getDiscountPercent() : discountPercent;
+
+        LocalDateTime start = parseTime(newStartText, "Thoi gian bat dau");
+        LocalDateTime end = parseTime(newEndText, "Thoi gian ket thuc");
+        if (!end.isAfter(start)) {
+            throw new IllegalArgumentException("Thoi gian ket thuc phai sau thoi gian bat dau");
+        }
+        if (newDiscount <= 0 || newDiscount >= 100) {
+            throw new IllegalArgumentException("Phan tram giam phai trong khoang 1-99");
+        }
+
+        event.setEventName(newName);
+        event.setStartTime(newStartText);
+        event.setEndTime(newEndText);
+        event.setDiscountPercent(newDiscount);
+        eventRepository.update(event);
+        return event;
+    }
+
+    public boolean removeItemFromOwnEvent(Seller seller, String eventId, String flashItemId) {
+        requireEditableEvent(seller, eventId);
+        FlashSaleItem item = itemRepository.findById(flashItemId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale Item"));
+        if (!eventId.equalsIgnoreCase(item.getEventId())) {
+            throw new IllegalArgumentException("Flash Sale Item khong thuoc su kien nay");
+        }
+        return itemService.deleteItem(flashItemId);
+    }
+
+    public FlashSaleEvent resubmitRejectedEvent(Seller seller, String eventId) {
+        requireSeller(seller);
+        if (!seller.ownsEvent(eventId)) {
+            throw new IllegalArgumentException("Flash Sale khong thuoc nguoi ban nay");
+        }
+        FlashSaleEvent event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale"));
+        if (event.getStatus() != SaleStatus.TU_CHOI) {
+            throw new IllegalArgumentException("Chi Flash Sale bi tu choi moi duoc gui lai");
+        }
+        if (itemRepository.findByEvent(eventId).isEmpty()) {
+            throw new IllegalArgumentException("Phai them it nhat mot san pham truoc khi gui lai");
+        }
+        event.setStatus(SaleStatus.CHO_PHE_DUYET);
+        eventRepository.update(event);
+        return event;
+    }
+
+    public Optional<Product> findProductById(String productId) {
+        return productRepository.findById(productId);
+    }
+
+    private FlashSaleEvent requireEditableEvent(Seller seller, String eventId) {
+        requireSeller(seller);
+        if (!seller.ownsEvent(eventId)) {
+            throw new IllegalArgumentException("Flash Sale khong thuoc nguoi ban nay");
+        }
+        FlashSaleEvent event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale"));
+        if (event.getStatus() != SaleStatus.CHO_PHE_DUYET
+                && event.getStatus() != SaleStatus.TU_CHOI) {
+            throw new IllegalArgumentException("Chi duoc sua Flash Sale cho duyet hoac bi tu choi");
+        }
+        return event;
+    }
+
     private void requireSeller(Seller seller) {
         if (seller == null) throw new IllegalStateException("Vui long dang nhap nguoi ban");
     }
@@ -170,7 +251,7 @@ public class SellerService {
     }
 
     private String cleanCsvText(String value) {
-        return value.trim().replace(',', ' ');
+        return TextEncodingFixer.repairConsoleText(value).trim().replace(',', ' ');
     }
 
     private LocalDateTime parseTime(String value, String field) {

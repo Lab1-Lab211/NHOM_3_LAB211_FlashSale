@@ -41,9 +41,11 @@ public class SellerView {
                     case "2": addProduct(); break;
                     case "3": listEvents(); break;
                     case "4": createFlashSale(); break;
-                    case "5": addFlashItem(); break;
+                    case "5": showEventDetails(); break;
                     case "6": listEventItems(); break;
-                    case "7": sellerController.logout(); System.out.println("Da dang xuat nguoi ban."); break;
+                    case "7": editFlashSale(); break;
+                    case "8": resubmitFlashSale(); break;
+                    case "9": sellerController.logout(); System.out.println("Da dang xuat nguoi ban."); break;
                     case "0": sellerController.logout(); running = false; break;
                     default: System.out.println("Lua chon khong hop le.");
                 }
@@ -58,9 +60,11 @@ public class SellerView {
         System.out.println("2. Them san pham moi");
         System.out.println("3. Xem Flash Sale cua toi va trang thai phe duyet");
         System.out.println("4. Tao Flash Sale va gui Admin phe duyet");
-        System.out.println("5. Them hang hoa vao Flash Sale cho duyet");
+        System.out.println("5. Xem chi tiet mot Flash Sale");
         System.out.println("6. Xem hang hoa trong mot Flash Sale");
-        System.out.println("7. Dang xuat");
+        System.out.println("7. Chinh sua Flash Sale (thong tin/them/xoa hang hoa)");
+        System.out.println("8. Gui lai yeu cau phe duyet");
+        System.out.println("9. Dang xuat");
         System.out.println("0. Quay lai chon role");
     }
 
@@ -137,9 +141,8 @@ public class SellerView {
         }
     }
 
-    private void addFlashItem() {
+    private void addFlashItem(String eventId) {
         try {
-            String eventId = input.readLine("Event ID: ").trim();
             String productId = input.readLine("Product ID cua ban: ").trim();
             int qty = input.readInt("So luong dua vao Flash Sale: ");
             double price = readDouble("Gia Flash Sale: ");
@@ -153,14 +156,111 @@ public class SellerView {
     private void listEventItems() {
         try {
             String eventId = input.readLine("Event ID: ").trim();
-            List<FlashSaleItem> items = sellerController.getItemsByEvent(eventId);
-            if (items.isEmpty()) {
-                System.out.println("Flash Sale chua co hang hoa.");
-                return;
-            }
-            for (FlashSaleItem item : items) System.out.println(item);
+            printEventItems(eventId);
         } catch (IllegalArgumentException | IllegalStateException e) {
             System.out.println(e.getMessage());
+        }
+    }
+
+    private void showEventDetails() {
+        try {
+            String eventId = input.readLine("Event ID: ").trim();
+            FlashSaleEvent event = sellerController.findOwnEvent(eventId)
+                    .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale cua ban"));
+            System.out.printf("%s | %s | %s | %s -> %s | giam %d%%%n",
+                    event.getEventId(), event.getEventName(), event.getStatus().getMoTa(),
+                    event.getStartTime(), event.getEndTime(), event.getDiscountPercent());
+            printEventItems(eventId);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void editFlashSale() {
+        String eventId = input.readLine("Event ID can chinh sua: ").trim();
+        try {
+            FlashSaleEvent event = sellerController.findOwnEvent(eventId)
+                    .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale cua ban"));
+            if (event.getStatus() != model.enums.SaleStatus.CHO_PHE_DUYET
+                    && event.getStatus() != model.enums.SaleStatus.TU_CHOI) {
+                throw new IllegalArgumentException("Chi duoc sua Flash Sale cho duyet hoac bi tu choi");
+            }
+
+            boolean editing = true;
+            while (editing) {
+                System.out.println("\n===== CHINH SUA " + eventId + " =====");
+                System.out.println("1. Sua ten/thoi gian/phan tram giam");
+                System.out.println("2. Them hang hoa");
+                System.out.println("3. Xoa hang hoa");
+                System.out.println("4. Xem hang hoa");
+                System.out.println("0. Hoan tat chinh sua");
+                String choice = input.readLine("Chon: ").trim();
+                switch (choice) {
+                    case "1": updateEventInfo(eventId); break;
+                    case "2": addFlashItem(eventId); break;
+                    case "3": removeFlashItem(eventId); break;
+                    case "4": printEventItems(eventId); break;
+                    case "0": editing = false; break;
+                    default: System.out.println("Lua chon khong hop le.");
+                }
+            }
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println("Khong the chinh sua: " + e.getMessage());
+        }
+    }
+
+    private void updateEventInfo(String eventId) {
+        FlashSaleEvent current = sellerController.findOwnEvent(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale"));
+        String name = input.readLine("Ten moi [Enter giu '" + current.getEventName() + "']: ");
+        String start = input.readLine("Bat dau moi [Enter giu " + current.getStartTime() + "]: ");
+        String end = input.readLine("Ket thuc moi [Enter giu " + current.getEndTime() + "]: ");
+        String discountText = input.readLine("Phan tram giam moi [Enter giu "
+                + current.getDiscountPercent() + "]: ").trim();
+        Integer discount = null;
+        if (!discountText.isEmpty()) {
+            try { discount = Integer.valueOf(discountText); }
+            catch (NumberFormatException e) { throw new IllegalArgumentException("Phan tram giam khong hop le"); }
+        }
+        FlashSaleEvent updated = sellerController.updateEvent(eventId, name, start, end, discount);
+        System.out.println("Cap nhat thanh cong: " + updated.getEventName());
+    }
+
+    private void removeFlashItem(String eventId) {
+        String flashItemId = input.readLine("Flash Item ID can xoa: ").trim();
+        boolean removed = sellerController.removeItem(eventId, flashItemId);
+        System.out.println(removed
+                ? "Xoa hang hoa thanh cong; so luong chua ban da hoan lai kho."
+                : "Xoa hang hoa that bai.");
+    }
+
+    private void resubmitFlashSale() {
+        try {
+            String eventId = input.readLine("Event ID bi tu choi can gui lai: ").trim();
+            FlashSaleEvent event = sellerController.resubmit(eventId);
+            System.out.println("Gui lai thanh cong. Trang thai: " + event.getStatus().getMoTa());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println("Gui lai that bai: " + e.getMessage());
+        }
+    }
+
+    private void printEventItems(String eventId) {
+        List<FlashSaleItem> items = sellerController.getItemsByEvent(eventId);
+        if (items.isEmpty()) {
+            System.out.println("Flash Sale chua co hang hoa.");
+            return;
+        }
+        System.out.printf("%-12s %-12s %-12s %-30s %-15s %8s %8s %8s %12s%n",
+                "FlashItem", "Event ID", "Product ID", "Ten san pham", "Danh muc",
+                "Gioi han", "Da ban", "Con lai", "Gia sale");
+        for (FlashSaleItem item : items) {
+            Product product = sellerController.findProductById(item.getProductId()).orElse(null);
+            String productName = product == null ? "Khong tim thay" : product.getName();
+            String category = product == null ? "-" : product.getCategory().getMoTa();
+            System.out.printf("%-12s %-12s %-12s %-30s %-15s %8d %8d %8d %12.0f%n",
+                    item.getFlashItemId(), item.getEventId(), item.getProductId(),
+                    productName, category, item.getLimitedQty(), item.getSoldQty(),
+                    item.soLuongConLai(), item.getFlashPrice());
         }
     }
 

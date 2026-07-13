@@ -7,7 +7,6 @@ import controller.ProductController;
 import controller.SellerController;
 import controller.SimulatorController;
 import model.Customer;
-import model.Product;
 import model.enums.ProductCategory;
 import repository.CustomerRepository;
 import repository.FlashSaleEventRepository;
@@ -23,6 +22,7 @@ import service.FlashSaleItemService;
 import service.FlashSaleService;
 import service.OrderService;
 import service.ProductService;
+import service.ProductCatalogEntry;
 import service.SellerService;
 import service.SimulatorService;
 
@@ -77,7 +77,7 @@ public class MainView {
         OrderService orderService = new OrderService(
                 orderRepository, orderDetailRepository, itemRepository, eventRepository, customerRepository);
         SimulatorService simulatorService = new SimulatorService(itemRepository, transactionRepository);
-        ProductService productService = new ProductService(productRepository);
+        ProductService productService = new ProductService(productRepository, itemRepository, eventRepository);
         SellerService sellerService = new SellerService(sellerRepository, productRepository,
                 eventRepository, itemRepository, itemService);
 
@@ -214,7 +214,7 @@ public class MainView {
     }
 
     private void searchProductByName() {
-        String keyword = input.readLine("Nhap ten san pham can tim: ");
+        String keyword = input.readLine("Nhap ten/ma san pham (co the go khong dau): ");
         printProducts(productController.searchByName(keyword));
     }
 
@@ -244,17 +244,45 @@ public class MainView {
         }
     }
 
-    private void printProducts(List<Product> products) {
-        if (products.isEmpty()) {
+    private void printProducts(List<ProductCatalogEntry> entries) {
+        if (entries.isEmpty()) {
             System.out.println("Khong tim thay san pham phu hop.");
             return;
         }
-        System.out.printf("%-12s %-30s %-15s %12s %8s%n",
-                "Product ID", "Ten", "Danh muc", "Gia goc", "Ton kho");
-        for (Product p : products) {
-            System.out.printf("%-12s %-30s %-15s %12.0f %8d%n",
-                    p.getProductId(), p.getName(), p.getCategory().getMoTa(),
-                    p.getOriginalPrice(), p.getStock());
+
+        List<ProductCatalogEntry> onSale = new java.util.ArrayList<>();
+        List<ProductCatalogEntry> notOnSale = new java.util.ArrayList<>();
+        for (ProductCatalogEntry entry : entries) {
+            (entry.isOnSale() ? onSale : notOnSale).add(entry);
+        }
+
+        System.out.println("\n=== SAN PHAM DANG SALE ===");
+        if (onSale.isEmpty()) {
+            System.out.println("Khong co san pham dang sale phu hop.");
+        } else {
+            System.out.printf("%-12s %-28s %-12s %11s %11s %-12s %8s%n",
+                    "Product ID", "Ten", "FlashItem", "Gia goc", "Gia sale", "Event ID", "Con lai");
+            for (ProductCatalogEntry entry : onSale) {
+                System.out.printf("%-12s %-28s %-12s %11.0f %11.0f %-12s %8d%n",
+                        entry.getProduct().getProductId(), entry.getProduct().getName(),
+                        entry.getSaleItem().getFlashItemId(), entry.getProduct().getOriginalPrice(),
+                        entry.getSaleItem().getFlashPrice(), entry.getSaleEvent().getEventId(),
+                        entry.getSaleItem().soLuongConLai());
+            }
+        }
+
+        System.out.println("\n=== SAN PHAM CHUA SALE ===");
+        if (notOnSale.isEmpty()) {
+            System.out.println("Khong co san pham chua sale phu hop.");
+        } else {
+            System.out.printf("%-12s %-30s %-15s %12s %8s%n",
+                    "Product ID", "Ten", "Danh muc", "Gia goc", "Ton kho");
+            for (ProductCatalogEntry entry : notOnSale) {
+                model.Product p = entry.getProduct();
+                System.out.printf("%-12s %-30s %-15s %12.0f %8d%n",
+                        p.getProductId(), p.getName(), p.getCategory().getMoTa(),
+                        p.getOriginalPrice(), p.getStock());
+            }
         }
     }
 

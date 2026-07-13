@@ -2,8 +2,15 @@ package repository;
 
 import model.Product;
 import model.enums.ProductCategory;
+import util.TextEncodingFixer;
 
+import java.text.Normalizer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * Repository quản lý sản phẩm ({@code products.csv}).
@@ -24,6 +31,39 @@ public class ProductRepository extends CsvRepository<Product> {
      */
     public ProductRepository(String filePath) {
         super(filePath, Product::new);
+        migrateBrokenProductNames();
+    }
+
+    @Override
+    public void save(Product product) {
+        repairName(product);
+        super.save(product);
+    }
+
+    @Override
+    public void update(Product product) {
+        repairName(product);
+        super.update(product);
+    }
+
+    private void repairName(Product product) {
+        if (product != null) {
+            product.setName(TextEncodingFixer.repairConsoleText(product.getName()));
+        }
+    }
+
+    /** Tu dong sua cac ten san pham da bi console Windows luu sai truoc day. */
+    private void migrateBrokenProductNames() {
+        List<Product> products = findAll();
+        boolean changed = false;
+        for (Product product : products) {
+            String repaired = TextEncodingFixer.repairConsoleText(product.getName());
+            if (!repaired.equals(product.getName())) {
+                product.setName(repaired);
+                changed = true;
+            }
+        }
+        if (changed) rewriteAll(products);
     }
 
     // -----------------------------------------------------------------------
@@ -59,20 +99,59 @@ public class ProductRepository extends CsvRepository<Product> {
      * @return danh sách sản phẩm có tên chứa keyword
      */
     public List<Product> findByName(String keyword) {
-        String normalizedKeyword = normalizeForSearch(keyword);
-        return findBy(p -> normalizeForSearch(p.getProductId()).contains(normalizedKeyword)
-                        || normalizeForSearch(p.getName()).contains(normalizedKeyword));
+        Set<String> normalizedKeywords = searchVariants(keyword);
+        return findBy(p -> matchesAny(normalizeSearchText(p.getName()), normalizedKeywords)
+                || matchesAny(normalizeSearchText(p.getProductId()), normalizedKeywords));
     }
 
-    private String normalizeForSearch(String input) {
-        if (input == null) return "";
-        String temp = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD);
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-        return pattern.matcher(temp).replaceAll("")
+    private boolean matchesAny(String searchableText, Set<String> keywords) {
+        for (String keyword : keywords) {
+            if (!keyword.isEmpty() && searchableText.contains(keyword)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Console Windows co the dua UTF-8 vao Java nhu CP437/CP1252. Tao cac bien
+     * the phuc hoi de ten co dau van tim duoc, dong thoi giu tim kiem khong dau.
+     */
+    private Set<String> searchVariants(String value) {
+        Set<String> rawVariants = new LinkedHashSet<>();
+        rawVariants.add(value == null ? "" : value);
+        Charset[] mistakenCharsets = {
+                Charset.forName("windows-1252"),
+                Charset.forName("IBM437"),
+                Charset.forName("IBM850"),
+                StandardCharsets.ISO_8859_1
+        };
+        for (Charset charset : mistakenCharsets) {
+            rawVariants.add(redecodeUtf8(value, charset));
+        }
+
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String variant : rawVariants) {
+            normalized.add(normalizeSearchText(variant));
+            for (Charset charset : mistakenCharsets) {
+                normalized.add(normalizeSearchText(redecodeUtf8(variant, charset)));
+            }
+        }
+        return normalized;
+    }
+
+    private String redecodeUtf8(String value, Charset mistakenCharset) {
+        if (value == null) return "";
+        return new String(value.getBytes(mistakenCharset), StandardCharsets.UTF_8);
+    }
+
+    private String normalizeSearchText(String value) {
+        if (value == null) return "";
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
                 .replace('đ', 'd')
                 .replace('Đ', 'D')
-                .toLowerCase()
+                .toLowerCase(Locale.ROOT)
                 .trim();
+        return normalized.replaceAll("\\s+", " ");
     }
 
     /**
