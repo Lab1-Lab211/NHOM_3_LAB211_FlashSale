@@ -1,5 +1,7 @@
 package repository;
 
+import exception.EntityNotFoundException;
+import exception.OutOfStockException;
 import model.Product;
 import model.enums.ProductCategory;
 import util.TextEncodingFixer;
@@ -161,5 +163,33 @@ public class ProductRepository extends CsvRepository<Product> {
      */
     public List<Product> findInStock() {
         return findBy(p -> p.getStock() > 0);
+    }
+
+    /** Tru ton kho san pham thuong mot cach dong bo. */
+    public synchronized Product sellRegularProduct(String productId, int quantity)
+            throws EntityNotFoundException, OutOfStockException {
+        Product product = findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product", productId));
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("So luong phai lon hon 0");
+        }
+        if (product.getStock() < quantity) {
+            throw new OutOfStockException(productId, quantity, product.getStock());
+        }
+        product.setStock(product.getStock() - quantity);
+        product.setVersion(product.getVersion() + 1);
+        update(product);
+        return product;
+    }
+
+    /** Hoan ton kho khi don san pham thuong bi huy. */
+    public synchronized Product restoreRegularProductStock(String productId, int quantity)
+            throws EntityNotFoundException {
+        Product product = findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product", productId));
+        product.setStock(product.getStock() + Math.max(0, quantity));
+        product.setVersion(product.getVersion() + 1);
+        update(product);
+        return product;
     }
 }

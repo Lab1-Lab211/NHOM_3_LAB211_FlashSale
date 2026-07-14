@@ -5,6 +5,9 @@ import model.FlashSaleEvent;
 import model.FlashSaleItem;
 import model.Product;
 import model.Seller;
+import model.Order;
+import model.OrderDetail;
+import model.enums.OrderStatus;
 import model.enums.ProductCategory;
 
 import java.util.List;
@@ -45,7 +48,10 @@ public class SellerView {
                     case "6": listEventItems(); break;
                     case "7": editFlashSale(); break;
                     case "8": resubmitFlashSale(); break;
-                    case "9": sellerController.logout(); System.out.println("Da dang xuat nguoi ban."); break;
+                    case "9": listReceivedOrders(); break;
+                    case "10": showReceivedOrderDetails(); break;
+                    case "11": updateOrderStatus(); break;
+                    case "12": sellerController.logout(); System.out.println("Da dang xuat nguoi ban."); break;
                     case "0": sellerController.logout(); running = false; break;
                     default: System.out.println("Lua chon khong hop le.");
                 }
@@ -64,7 +70,10 @@ public class SellerView {
         System.out.println("6. Xem hang hoa trong mot Flash Sale");
         System.out.println("7. Chinh sua Flash Sale (thong tin/them/xoa hang hoa)");
         System.out.println("8. Gui lai yeu cau phe duyet");
-        System.out.println("9. Dang xuat");
+        System.out.println("9. Xem danh sach don hang nhan duoc");
+        System.out.println("10. Xem chi tiet don hang");
+        System.out.println("11. Cap nhat trang thai don hang");
+        System.out.println("12. Dang xuat");
         System.out.println("0. Quay lai chon role");
     }
 
@@ -241,6 +250,83 @@ public class SellerView {
             System.out.println("Gui lai thanh cong. Trang thai: " + event.getStatus().getMoTa());
         } catch (IllegalArgumentException | IllegalStateException e) {
             System.out.println("Gui lai that bai: " + e.getMessage());
+        }
+    }
+
+    private void listReceivedOrders() {
+        try {
+            List<Order> orders = sellerController.getReceivedOrders();
+            if (orders.isEmpty()) {
+                System.out.println("Chua co don hang nao dat san pham trong Flash Sale cua ban.");
+                return;
+            }
+            System.out.printf("%-12s %-12s %-12s %-20s %-22s %14s%n",
+                    "Order ID", "Customer", "Event ID", "Thoi gian", "Trang thai", "Tong tien");
+            for (Order order : orders) {
+                System.out.printf("%-12s %-12s %-12s %-20s %-22s %14.0f%n",
+                        order.getOrderId(), order.getCustomerId(), order.getEventId(),
+                        order.getOrderTime(), order.getStatus().getMoTa(), order.getTotalAmount());
+            }
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println("Khong the xem don hang: " + e.getMessage());
+        }
+    }
+
+    private void showReceivedOrderDetails() {
+        String orderId = input.readLine("Order ID: ").trim();
+        try {
+            Order order = sellerController.getReceivedOrder(orderId);
+            List<OrderDetail> details = sellerController.getReceivedOrderDetails(orderId);
+            System.out.printf("Don: %s | Khach hang: %s | Flash Sale: %s | %s | %s | Tong: %.0f%n",
+                    order.getOrderId(), order.getCustomerId(), order.getEventId(),
+                    order.getOrderTime(), order.getStatus().getMoTa(), order.getTotalAmount());
+            if (details.isEmpty()) {
+                System.out.println("Don hang khong co chi tiet.");
+                return;
+            }
+            System.out.printf("%-12s %-12s %-12s %-30s %8s %12s %14s%n",
+                    "Detail ID", "Item ref", "Product ID", "Ten san pham",
+                    "So luong", "Don gia", "Thanh tien");
+            for (OrderDetail detail : details) {
+                String reference = detail.getFlashItemId();
+                boolean regularProduct = reference != null && reference.startsWith("PRD-");
+                FlashSaleItem item = regularProduct ? null
+                        : sellerController.findFlashItemById(reference).orElse(null);
+                String productId = regularProduct ? reference : (item == null ? "-" : item.getProductId());
+                Product product = "-".equals(productId) ? null
+                        : sellerController.findProductById(productId).orElse(null);
+                String productName = product == null ? "Khong tim thay" : product.getName();
+                System.out.printf("%-12s %-12s %-12s %-30s %8d %12.0f %14.0f%n",
+                        detail.getDetailId(), detail.getFlashItemId(), productId, productName,
+                        detail.getQuantity(), detail.getUnitPrice(), detail.thanhTien());
+            }
+        } catch (Exception e) {
+            System.out.println("Khong the xem chi tiet don hang: " + e.getMessage());
+        }
+    }
+
+    private void updateOrderStatus() {
+        String orderId = input.readLine("Order ID can cap nhat: ").trim();
+        System.out.println("1. Da xac nhan");
+        System.out.println("2. Dang chuan bi hang");
+        System.out.println("3. Dang giao hang");
+        System.out.println("4. Hoan thanh");
+        int choice = input.readInt("Chon trang thai moi: ");
+        OrderStatus status;
+        switch (choice) {
+            case 1: status = OrderStatus.DA_XAC_NHAN; break;
+            case 2: status = OrderStatus.DANG_CHUAN_BI; break;
+            case 3: status = OrderStatus.DANG_GIAO; break;
+            case 4: status = OrderStatus.HOAN_THANH; break;
+            default:
+                System.out.println("Trang thai khong hop le.");
+                return;
+        }
+        try {
+            Order updated = sellerController.updateOrderStatus(orderId, status);
+            System.out.println("Cap nhat thanh cong. Trang thai moi: " + updated.getStatus().getMoTa());
+        } catch (Exception e) {
+            System.out.println("Cap nhat trang thai that bai: " + e.getMessage());
         }
     }
 

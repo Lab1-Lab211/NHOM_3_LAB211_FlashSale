@@ -1,2 +1,3 @@
 ﻿sellerId,name,email,passwordHash,passwordSalt,productIds,eventIds,registeredDate
 SEL-00001,Demo Shop,shopdemo@gmail.com,0ZRK8i2Bh1aHIslLjeakap2S+g3OF09ZNNxqC05ieUU=,z81AGZn4hbT5pON+Hyx0+g==,PRD-05001;PRD-05002;PRD-05003;PRD-05004;PRD-05005,EVT-00021;EVT-00022;EVT-00023;EVT-00024,2026-07-12
+SEL-00002,Nam,nam123@gmail.com,bz1XUBv5N9akGfSZBTaCh8neDyICwZcpDdT9PuaAnXI=,5cgSE1TzfpXRNv2Z1bXdsg==,,,2026-07-13

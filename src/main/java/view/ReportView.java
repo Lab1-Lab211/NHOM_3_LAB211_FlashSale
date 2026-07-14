@@ -14,8 +14,10 @@ public class ReportView {
         System.out.println(result.getMessage());
         System.out.println("Order ID      : " + result.getOrder().getOrderId());
         System.out.println("Customer ID   : " + result.getOrder().getCustomerId());
+        System.out.println("Order type    : "
+                + (result.getFlashSaleItem() == null ? "REGULAR PRODUCT" : "FLASH SALE"));
         System.out.println("Event ID      : " + result.getOrder().getEventId());
-        System.out.println("Flash Item ID : " + result.getOrderDetail().getFlashItemId());
+        System.out.println("Item ID       : " + result.getOrderDetail().getFlashItemId());
         System.out.println("Quantity      : " + result.getOrderDetail().getQuantity());
         System.out.printf("Unit price    : %.0f%n", result.getOrderDetail().getUnitPrice());
         if (result.getTierBeforeOrder() != null) {
