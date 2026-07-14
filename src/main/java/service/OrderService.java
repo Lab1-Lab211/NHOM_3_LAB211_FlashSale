@@ -105,7 +105,7 @@ public class OrderService {
             throws EntityNotFoundException, OutOfStockException {
         if (customer == null) throw new IllegalStateException("Vui long login truoc khi dat hang");
         if (productRepository == null) throw new IllegalStateException("ProductRepository chua duoc khoi tao");
-        validateQuantity(quantity);
+        validateNormalQuantity(quantity);
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException("Product", productId));
@@ -263,8 +263,15 @@ public class OrderService {
             throw new IllegalArgumentException("So luong phai lon hon 0");
         }
         if (quantity > PURCHASE_LIMIT_PER_ITEM) {
-            throw new IllegalArgumentException("Moi lan chi duoc dat toi da "
-                    + PURCHASE_LIMIT_PER_ITEM + " san pham");
+            throw new IllegalArgumentException("Flash Sale chi duoc dat toi da "
+                    + PURCHASE_LIMIT_PER_ITEM + " san pham moi lan");
+        }
+    }
+
+    /** Dat hang binh thuong: khong gioi han so luong, chi can > 0 va du ton kho. */
+    private void validateNormalQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("So luong phai lon hon 0");
         }
     }
 

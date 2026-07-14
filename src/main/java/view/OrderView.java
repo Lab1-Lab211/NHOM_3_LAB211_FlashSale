@@ -15,8 +15,8 @@ public class OrderView {
     private final ConsoleInput input;
 
     public OrderView(OrderController orderController,
-                     CustomerController customerController,
-                     ConsoleInput input) {
+            CustomerController customerController,
+            ConsoleInput input) {
         this.orderController = orderController;
         this.customerController = customerController;
         this.input = input;
@@ -75,7 +75,7 @@ public class OrderView {
         }
 
         String id = input.readLine("Nhap ID san pham (FSI-xxxxx hoac PRD-xxxxx): ").trim();
-        int quantity = input.readInt("Nhap so luong (1-2): ");
+        int quantity = input.readInt("Nhap so luong (1-2 neu la san pham flashsale): ");
 
         boolean isFlashItem = id.toUpperCase().startsWith("FSI-");
 
