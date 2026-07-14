@@ -75,8 +75,13 @@ public class MainView {
         FlashSaleItemService itemService = new FlashSaleItemService(itemRepository, eventRepository, productRepository);
         FlashSaleService flashSaleService = new FlashSaleService(eventRepository, itemService);
         OrderService orderService = new OrderService(
+<<<<<<< HEAD
                 orderRepository, orderDetailRepository, itemRepository, eventRepository, customerRepository);
         orderService.setProductRepository(productRepository);
+=======
+                orderRepository, orderDetailRepository, itemRepository, eventRepository,
+                customerRepository, productRepository);
+>>>>>>> 93d0d9ab836c3309fbe858b50049c875464225a9
         SimulatorService simulatorService = new SimulatorService(itemRepository, transactionRepository);
         ProductService productService = new ProductService(productRepository, itemRepository, eventRepository);
         SellerService sellerService = new SellerService(sellerRepository, productRepository,
@@ -86,7 +91,7 @@ public class MainView {
         FlashSaleController flashSaleController = new FlashSaleController(flashSaleService);
         OrderController orderController = new OrderController(orderService);
         SimulatorController simulatorController = new SimulatorController(simulatorService);
-        SellerController sellerController = new SellerController(sellerService);
+        SellerController sellerController = new SellerController(sellerService, orderService);
 
         this.flashSaleView = new FlashSaleView(flashSaleController);
         this.orderView = new OrderView(orderController, customerController, input);
@@ -206,7 +211,7 @@ public class MainView {
         System.out.println("4. Tim kiem san pham theo ten");
         System.out.println("5. Loc san pham theo danh muc");
         System.out.println("6. Loc san pham theo khoang gia");
-        System.out.println("7. Dat hang");
+        System.out.println("7. Dat hang (Flash Sale hoac san pham thuong)");
         System.out.println("8. Xem trang thai/lich su don hang");
         System.out.println("9. Huy don hang");
         System.out.println("10. Xem ket qua dat hang gan nhat");

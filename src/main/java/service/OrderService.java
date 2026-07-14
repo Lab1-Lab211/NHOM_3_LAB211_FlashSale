@@ -11,6 +11,10 @@ import model.FlashSaleItem;
 import model.Order;
 import model.OrderDetail;
 import model.Product;
+<<<<<<< HEAD
+=======
+import model.Seller;
+>>>>>>> 93d0d9ab836c3309fbe858b50049c875464225a9
 import model.enums.CustomerTier;
 import model.enums.LockMechanism;
 import model.enums.OrderStatus;
@@ -25,6 +29,9 @@ import repository.ProductRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 
 public class OrderService {
     private static final int PURCHASE_LIMIT_PER_ITEM = 2;
@@ -40,13 +47,18 @@ public class OrderService {
     private final FlashSaleItemRepository flashSaleItemRepository;
     private final FlashSaleEventRepository flashSaleEventRepository;
     private final CustomerRepository customerRepository;
+<<<<<<< HEAD
     private ProductRepository productRepository;
+=======
+    private final ProductRepository productRepository;
+>>>>>>> 93d0d9ab836c3309fbe858b50049c875464225a9
 
     public OrderService(OrderRepository orderRepository,
                         OrderDetailRepository orderDetailRepository,
                         FlashSaleItemRepository flashSaleItemRepository,
                         FlashSaleEventRepository flashSaleEventRepository) {
-        this(orderRepository, orderDetailRepository, flashSaleItemRepository, flashSaleEventRepository, null);
+        this(orderRepository, orderDetailRepository, flashSaleItemRepository,
+                flashSaleEventRepository, null, null);
     }
 
     public OrderService(OrderRepository orderRepository,
@@ -54,11 +66,22 @@ public class OrderService {
                         FlashSaleItemRepository flashSaleItemRepository,
                         FlashSaleEventRepository flashSaleEventRepository,
                         CustomerRepository customerRepository) {
+        this(orderRepository, orderDetailRepository, flashSaleItemRepository,
+                flashSaleEventRepository, customerRepository, null);
+    }
+
+    public OrderService(OrderRepository orderRepository,
+                        OrderDetailRepository orderDetailRepository,
+                        FlashSaleItemRepository flashSaleItemRepository,
+                        FlashSaleEventRepository flashSaleEventRepository,
+                        CustomerRepository customerRepository,
+                        ProductRepository productRepository) {
         this.orderRepository = orderRepository;
         this.orderDetailRepository = orderDetailRepository;
         this.flashSaleItemRepository = flashSaleItemRepository;
         this.flashSaleEventRepository = flashSaleEventRepository;
         this.customerRepository = customerRepository;
+        this.productRepository = productRepository;
     }
 
     public void setProductRepository(ProductRepository productRepository) {
@@ -97,6 +120,7 @@ public class OrderService {
         return orderRepository.findByCustomer(customer.getCustomerId());
     }
 
+<<<<<<< HEAD
     /**
      * Dat hang binh thuong (khong phai flash sale) bang productId.
      * Su dung gia goc cua san pham, tru ton kho trong products.csv.
@@ -150,6 +174,99 @@ public class OrderService {
         // Tao mot BookingResult gia lap (khong co FlashSaleItem/Event)
         return new BookingResult(order, detail, null, "Dat hang binh thuong thanh cong",
                 tier, tierAfter, subtotalAmount, discountPercent, discountAmount);
+=======
+    public BookingResult placeRegularProductOrder(Customer customer, String productId, int quantity)
+            throws EntityNotFoundException, OutOfStockException {
+        if (customer == null) {
+            throw new IllegalStateException("Vui long login truoc khi dat hang");
+        }
+        if (productRepository == null) {
+            throw new IllegalStateException("Chuc nang dat san pham thuong chua duoc khoi tao");
+        }
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("So luong phai lon hon 0");
+        }
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product", productId));
+        CustomerTier tierBeforeOrder = customer.getTier();
+        double subtotalAmount = quantity * product.getOriginalPrice();
+        double discountPercent = discountPercentForTier(tierBeforeOrder);
+        double discountAmount = subtotalAmount * discountPercent / 100.0;
+        double totalAmount = subtotalAmount - discountAmount;
+
+        productRepository.sellRegularProduct(productId, quantity);
+        String orderId = nextOrderId();
+        Order order = new Order(orderId, customer.getCustomerId(), "REGULAR",
+                LocalDateTime.now().format(DATE_TIME_FORMATTER),
+                OrderStatus.DA_XAC_NHAN, totalAmount);
+        OrderDetail detail = new OrderDetail(nextDetailId(), orderId, productId,
+                quantity, product.getOriginalPrice());
+        orderRepository.save(order);
+        orderDetailRepository.save(detail);
+        CustomerTier tierAfterOrder = updateTierAfterSuccessfulOrder(customer, customer.getCustomerId());
+
+        return new BookingResult(order, detail, null, "Dat san pham thuong thanh cong",
+                tierBeforeOrder, tierAfterOrder, subtotalAmount, discountPercent, discountAmount);
+    }
+
+    public List<Order> getOrdersForSeller(Seller seller) {
+        requireSeller(seller);
+        Set<String> ownedItemReferences = new HashSet<>(seller.getProductIds());
+        for (FlashSaleItem item : flashSaleItemRepository.findAll()) {
+            if (seller.ownsProduct(item.getProductId())) {
+                ownedItemReferences.add(item.getFlashItemId());
+            }
+        }
+        Set<String> ownedOrderIds = new HashSet<>();
+        for (OrderDetail detail : orderDetailRepository.findAll()) {
+            if (ownedItemReferences.contains(detail.getFlashItemId())) {
+                ownedOrderIds.add(detail.getOrderId());
+            }
+        }
+        return orderRepository.findBy(order -> seller.ownsEvent(order.getEventId())
+                || ownedOrderIds.contains(order.getOrderId()));
+    }
+
+    public Order getOrderForSeller(Seller seller, String orderId) throws EntityNotFoundException {
+        requireSeller(seller);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+        if (!sellerOwnsOrder(seller, order)) {
+            throw new IllegalArgumentException("Don hang khong thuoc Flash Sale cua ban");
+        }
+        return order;
+    }
+
+    public List<OrderDetail> getOrderDetailsForSeller(Seller seller, String orderId)
+            throws EntityNotFoundException {
+        getOrderForSeller(seller, orderId);
+        return orderDetailRepository.findByOrder(orderId);
+    }
+
+    public Optional<FlashSaleItem> findFlashSaleItem(String flashItemId) {
+        return flashSaleItemRepository.findById(flashItemId);
+    }
+
+    public Order updateOrderStatusForSeller(Seller seller, String orderId, OrderStatus newStatus)
+            throws EntityNotFoundException {
+        Order order = getOrderForSeller(seller, orderId);
+        if (newStatus == null) {
+            throw new IllegalArgumentException("Trang thai moi khong hop le");
+        }
+        OrderStatus expected = nextStatus(order.getStatus());
+        if (expected == null) {
+            throw new IllegalArgumentException("Don hang o trang thai "
+                    + order.getStatus().getMoTa() + " khong the cap nhat tiep");
+        }
+        if (newStatus != expected) {
+            throw new IllegalArgumentException("Chuyen trang thai khong hop le. Trang thai tiep theo phai la: "
+                    + expected.getMoTa());
+        }
+        order.setStatus(newStatus);
+        orderRepository.update(order);
+        return order;
+>>>>>>> 93d0d9ab836c3309fbe858b50049c875464225a9
     }
 
     public Order cancelOrder(Customer customer, String orderId) throws EntityNotFoundException {
@@ -165,9 +282,21 @@ public class OrderService {
         if (order.getStatus() == OrderStatus.THAT_BAI) {
             throw new IllegalArgumentException("Khong the huy don hang that bai");
         }
+        if (order.getStatus() == OrderStatus.DANG_GIAO
+                || order.getStatus() == OrderStatus.HOAN_THANH) {
+            throw new IllegalArgumentException("Khong the huy don dang giao hoac da hoan thanh");
+        }
 
         for (OrderDetail detail : orderDetailRepository.findByOrder(orderId)) {
-            flashSaleItemRepository.restoreSoldQuantity(detail.getFlashItemId(), detail.getQuantity());
+            String itemReference = detail.getFlashItemId();
+            if (itemReference != null && itemReference.startsWith("PRD-")) {
+                if (productRepository == null) {
+                    throw new IllegalStateException("Khong the hoan kho san pham thuong");
+                }
+                productRepository.restoreRegularProductStock(itemReference, detail.getQuantity());
+            } else {
+                flashSaleItemRepository.restoreSoldQuantity(itemReference, detail.getQuantity());
+            }
         }
         order.setStatus(OrderStatus.DA_HUY);
         orderRepository.update(order);
@@ -312,11 +441,48 @@ public class OrderService {
     private double totalConfirmedSpent(String customerId) {
         double total = 0.0;
         for (Order order : orderRepository.findByCustomer(customerId)) {
-            if (order.getStatus() == OrderStatus.DA_XAC_NHAN) {
+            if (isSuccessfulOrder(order.getStatus())) {
                 total += order.getTotalAmount();
             }
         }
         return total;
+    }
+
+    private void requireSeller(Seller seller) {
+        if (seller == null) throw new IllegalStateException("Vui long dang nhap nguoi ban");
+    }
+
+    private boolean sellerOwnsOrder(Seller seller, Order order) {
+        if (seller.ownsEvent(order.getEventId())) return true;
+        for (OrderDetail detail : orderDetailRepository.findByOrder(order.getOrderId())) {
+            String reference = detail.getFlashItemId();
+            if (reference != null && reference.startsWith("PRD-")
+                    && seller.ownsProduct(reference)) {
+                return true;
+            }
+            Optional<FlashSaleItem> item = flashSaleItemRepository.findById(reference);
+            if (item.isPresent() && seller.ownsProduct(item.get().getProductId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private OrderStatus nextStatus(OrderStatus current) {
+        switch (current) {
+            case CHO_XU_LY: return OrderStatus.DA_XAC_NHAN;
+            case DA_XAC_NHAN: return OrderStatus.DANG_CHUAN_BI;
+            case DANG_CHUAN_BI: return OrderStatus.DANG_GIAO;
+            case DANG_GIAO: return OrderStatus.HOAN_THANH;
+            default: return null;
+        }
+    }
+
+    private boolean isSuccessfulOrder(OrderStatus status) {
+        return status == OrderStatus.DA_XAC_NHAN
+                || status == OrderStatus.DANG_CHUAN_BI
+                || status == OrderStatus.DANG_GIAO
+                || status == OrderStatus.HOAN_THANH;
     }
 
     private CustomerTier calculateTierByTotalSpent(double totalSpent) {
