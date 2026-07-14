@@ -1,5 +1,4 @@
 ﻿customerId,name,email,passwordHash,passwordSalt,tier,registeredDate
-<<<<<<< HEAD
 CUS-00001,Nguyễn Văn Thảo,thao.nguyen1@email.com,rkTOlEJsbnvMQqDl7g7bd3nj2h9PRhElIf1s5y4Xjjs=,qGhtJn9wh7YcXS/w/5pXRQ==,REGULAR,2025-10-21
 CUS-00002,Nguyễn Ngọc Minh,minh.nguyen2@email.com,R7fMgQsywIP34jBUunhoAGliA4VEYdKozOtoYq5hXkc=,4mCEWofct5yo9wJHizQjtQ==,REGULAR,2024-10-24
 CUS-00003,Bùi Ngọc Mai,mai.bui3@email.com,2Gv3AQDxp67/p7JXrQsyWICwecp+BnvUkz58tE74Ka4=,v60JdAFxblQAYrCDW8+c0g==,REGULAR,2025-10-28
@@ -2007,7 +2006,6 @@ CUS-02004,Nam,nam12@gmail.com,PuEBqYlwbz2eqQkNUWOoYsCRX376SOfS84Deu2U3WP0=,08EXp
 CUS-02005,Nam,12nam@gmail.com,bJzH3DIQjHuACU/mJD0TlZ4WK85O2X9WEukLsv+KYCc=,SdbcFUKrhZ7r11V+YQUXfQ==,REGULAR,2026-07-13
 CUS-02006,Nam,na2m@gmail.com,GaYeQnFjOtBUmSUK/D/dbjok0zHp5Kt4lCAK+ZJgKqU=,aYVQT1vDCSktE/WWOS3yjQ==,VIP,2026-07-13
 CUS-02007,Nam,n2am@gmail.com,VH/N226o6v7edTNAK1f3h7Uw/g6wt/JwB6MCYJ5oSvI=,nkQ42ZsZSgIjmaKt/bNP6w==,VIP,2026-07-14
-=======
 CUS-00001,Nguyễn Văn Thảo,thao.nguyen1@email.com,+z1fHex3FeqJMWRT6Y/+F8kT39BYHaeWowISHu7eKXQ=,wsAy6lqWYdSiQnJOuLHNdA==,REGULAR,2025-10-21
 CUS-00002,Nguyễn Ngọc Minh,minh.nguyen2@email.com,aWXSigDyK4ZjknZu/FxTlDs5IYSVrg29RD5A+Bbt91Y=,L0ja8W8SrJjqVlVDF3jn+g==,REGULAR,2024-10-24
 CUS-00003,Bùi Ngọc Mai,mai.bui3@email.com,QoCSLNDIpFrLlUTKOgwWgg2kp9Tt/Fo4W3hlALlc2AU=,my5Mc7qCXza01Z29bzEDXg==,REGULAR,2025-10-28
@@ -4019,4 +4017,3 @@ CUS-02008,nam,nam456@gmail.com,sQq3+QqKOdwtFUQAQ35Zla3FKJxrOyJ0vyf803blnCM=,E8g9
 CUS-02009,thinh123,hehe@gmail.com,ofUg5GM+NOT2vDIFfvt/oQNzBb4PQeKBBgG4LZtfPwQ=,NI/PnD44xyLt0OoUsGeyLA==,REGULAR,2026-07-12
 CUS-02010,hehe,hoho123@gmail.com,dl+Nt7yAOzTmCxAy0Y9gM5swuoXUAbdYaPlAAImKdvk=,8umHQPSVG+5tFNiOszlAEQ==,REGULAR,2026-07-12
 CUS-02011,hehe,hoho@gmail.com,cRv52Rd7l43323HR/8Kf9m6vPHfH3Zw4FKCveo5ZHEs=,JPFMNbj3Gm3Bz1TOi693mA==,REGULAR,2026-07-13
->>>>>>> 93d0d9ab836c3309fbe858b50049c875464225a9

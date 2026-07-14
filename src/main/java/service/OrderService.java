@@ -11,10 +11,8 @@ import model.FlashSaleItem;
 import model.Order;
 import model.OrderDetail;
 import model.Product;
-<<<<<<< HEAD
-=======
 import model.Seller;
->>>>>>> 93d0d9ab836c3309fbe858b50049c875464225a9
+
 import model.enums.CustomerTier;
 import model.enums.LockMechanism;
 import model.enums.OrderStatus;
@@ -47,11 +45,8 @@ public class OrderService {
     private final FlashSaleItemRepository flashSaleItemRepository;
     private final FlashSaleEventRepository flashSaleEventRepository;
     private final CustomerRepository customerRepository;
-<<<<<<< HEAD
     private ProductRepository productRepository;
-=======
-    private final ProductRepository productRepository;
->>>>>>> 93d0d9ab836c3309fbe858b50049c875464225a9
+
 
     public OrderService(OrderRepository orderRepository,
                         OrderDetailRepository orderDetailRepository,
@@ -120,7 +115,8 @@ public class OrderService {
         return orderRepository.findByCustomer(customer.getCustomerId());
     }
 
-<<<<<<< HEAD
+
+
     /**
      * Dat hang binh thuong (khong phai flash sale) bang productId.
      * Su dung gia goc cua san pham, tru ton kho trong products.csv.
@@ -174,7 +170,8 @@ public class OrderService {
         // Tao mot BookingResult gia lap (khong co FlashSaleItem/Event)
         return new BookingResult(order, detail, null, "Dat hang binh thuong thanh cong",
                 tier, tierAfter, subtotalAmount, discountPercent, discountAmount);
-=======
+    }
+
     public BookingResult placeRegularProductOrder(Customer customer, String productId, int quantity)
             throws EntityNotFoundException, OutOfStockException {
         if (customer == null) {
@@ -266,7 +263,7 @@ public class OrderService {
         order.setStatus(newStatus);
         orderRepository.update(order);
         return order;
->>>>>>> 93d0d9ab836c3309fbe858b50049c875464225a9
+
     }
 
     public Order cancelOrder(Customer customer, String orderId) throws EntityNotFoundException {
