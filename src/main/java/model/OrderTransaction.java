@@ -10,7 +10,11 @@ import model.enums.LockMechanism;
 public class OrderTransaction extends BaseEntity {
 
     private String transactionId;
+    private String requestId;         // Định danh request logic để đối chiếu giữa các cơ chế
     private String orderId;           // FK → orders.csv
+    private String customerId;        // Khách hàng được gán cho thread simulator
+    private String flashItemId;       // Sản phẩm mà customer đang tranh mua
+    private int quantity;             // Số lượng customer yêu cầu
     private LockMechanism mechanism;  // Cơ chế đồng bộ sử dụng
     private String threadName;        // Tên thread xử lý
     private long startTime;           // Thời điểm bắt đầu (nano)
@@ -27,9 +31,23 @@ public class OrderTransaction extends BaseEntity {
     public OrderTransaction(String transactionId, String orderId, LockMechanism mechanism,
                             String threadName, long startTime, long endTime,
                             boolean success, String errorMessage) {
+        this(transactionId, transactionId, orderId, "-", "-", 0, mechanism, threadName,
+                startTime, endTime, success, errorMessage);
+    }
+
+    /** Constructor dùng bởi Simulator khi mỗi thread đã được gán một customer. */
+    public OrderTransaction(String transactionId, String requestId, String orderId,
+                            String customerId, String flashItemId, int quantity,
+                            LockMechanism mechanism, String threadName,
+                            long startTime, long endTime,
+                            boolean success, String errorMessage) {
         super(transactionId);
         this.transactionId = transactionId;
+        this.requestId = requestId;
         this.orderId = orderId;
+        this.customerId = customerId;
+        this.flashItemId = flashItemId;
+        this.quantity = quantity;
         this.mechanism = mechanism;
         this.threadName = threadName;
         this.startTime = startTime;
@@ -49,7 +67,8 @@ public class OrderTransaction extends BaseEntity {
     @Override
     public String toCsvLine() {
         return String.join(",",
-                transactionId, orderId, mechanism.name(), threadName,
+                transactionId, requestId, orderId, customerId, flashItemId,
+                String.valueOf(quantity), mechanism.name(), threadName,
                 String.valueOf(startTime), String.valueOf(endTime),
                 String.valueOf(success),
                 errorMessage != null ? errorMessage : ""
@@ -61,18 +80,50 @@ public class OrderTransaction extends BaseEntity {
         String[] parts = csvLine.split(",", -1);
         this.transactionId = parts[0].trim();
         this.id = this.transactionId;
-        this.orderId = parts[1].trim();
-        this.mechanism = LockMechanism.valueOf(parts[2].trim());
-        this.threadName = parts[3].trim();
-        this.startTime = Long.parseLong(parts[4].trim());
-        this.endTime = Long.parseLong(parts[5].trim());
-        this.success = Boolean.parseBoolean(parts[6].trim());
-        this.errorMessage = parts.length > 7 ? parts[7].trim() : "";
+        if (parts.length >= 12) {
+            this.requestId = parts[1].trim();
+            this.orderId = parts[2].trim();
+            this.customerId = parts[3].trim();
+            this.flashItemId = parts[4].trim();
+            this.quantity = Integer.parseInt(parts[5].trim());
+            this.mechanism = LockMechanism.valueOf(parts[6].trim());
+            this.threadName = parts[7].trim();
+            this.startTime = Long.parseLong(parts[8].trim());
+            this.endTime = Long.parseLong(parts[9].trim());
+            this.success = Boolean.parseBoolean(parts[10].trim());
+            this.errorMessage = parts[11].trim();
+        } else if (parts.length >= 9) {
+            // Tương thích với bản trung gian chỉ có thêm customerId.
+            this.requestId = transactionId;
+            this.orderId = parts[1].trim();
+            this.customerId = parts[2].trim();
+            this.flashItemId = "-";
+            this.quantity = 0;
+            this.mechanism = LockMechanism.valueOf(parts[3].trim());
+            this.threadName = parts[4].trim();
+            this.startTime = Long.parseLong(parts[5].trim());
+            this.endTime = Long.parseLong(parts[6].trim());
+            this.success = Boolean.parseBoolean(parts[7].trim());
+            this.errorMessage = parts[8].trim();
+        } else {
+            // Tương thích với transactions.csv cũ chưa có customerId.
+            this.requestId = transactionId;
+            this.orderId = parts[1].trim();
+            this.customerId = "-";
+            this.flashItemId = "-";
+            this.quantity = 0;
+            this.mechanism = LockMechanism.valueOf(parts[2].trim());
+            this.threadName = parts[3].trim();
+            this.startTime = Long.parseLong(parts[4].trim());
+            this.endTime = Long.parseLong(parts[5].trim());
+            this.success = Boolean.parseBoolean(parts[6].trim());
+            this.errorMessage = parts.length > 7 ? parts[7].trim() : "";
+        }
     }
 
     @Override
     public String getCsvHeader() {
-        return "transactionId,orderId,mechanism,threadName,startTime,endTime,success,errorMessage";
+        return "transactionId,requestId,orderId,customerId,flashItemId,quantity,mechanism,threadName,startTime,endTime,success,errorMessage";
     }
 
     // === Getter & Setter ===
@@ -80,8 +131,20 @@ public class OrderTransaction extends BaseEntity {
     public String getTransactionId() { return transactionId; }
     public void setTransactionId(String transactionId) { this.transactionId = transactionId; this.id = transactionId; }
 
+    public String getRequestId() { return requestId; }
+    public void setRequestId(String requestId) { this.requestId = requestId; }
+
     public String getOrderId() { return orderId; }
     public void setOrderId(String orderId) { this.orderId = orderId; }
+
+    public String getCustomerId() { return customerId; }
+    public void setCustomerId(String customerId) { this.customerId = customerId; }
+
+    public String getFlashItemId() { return flashItemId; }
+    public void setFlashItemId(String flashItemId) { this.flashItemId = flashItemId; }
+
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
 
     public LockMechanism getMechanism() { return mechanism; }
     public void setMechanism(LockMechanism mechanism) { this.mechanism = mechanism; }
@@ -103,9 +166,9 @@ public class OrderTransaction extends BaseEntity {
 
     @Override
     public String toString() {
-        return String.format("OrderTransaction{id='%s', donHang='%s', coChe=%s, thread='%s', " +
+        return String.format("OrderTransaction{id='%s', donHang='%s', customer='%s', coChe=%s, thread='%s', " +
                         "thoiGian=%.2fms, thanhCong=%s}",
-                transactionId, orderId, mechanism.getMoTa(), threadName,
+                transactionId, orderId, customerId, mechanism.getMoTa(), threadName,
                 thoiGianXuLyMs(), success ? "Có" : "Không");
     }
 }

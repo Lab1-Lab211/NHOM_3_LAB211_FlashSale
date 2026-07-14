@@ -75,9 +75,10 @@ public class MainView {
         FlashSaleItemService itemService = new FlashSaleItemService(itemRepository, eventRepository, productRepository);
         FlashSaleService flashSaleService = new FlashSaleService(eventRepository, itemService);
         OrderService orderService = new OrderService(
-                orderRepository, orderDetailRepository, itemRepository, eventRepository, customerRepository);
-        orderService.setProductRepository(productRepository);
-        SimulatorService simulatorService = new SimulatorService(itemRepository, transactionRepository);
+                orderRepository, orderDetailRepository, itemRepository, eventRepository,
+                customerRepository, productRepository);
+        SimulatorService simulatorService = new SimulatorService(
+                itemRepository, transactionRepository, customerRepository);
         ProductService productService = new ProductService(productRepository, itemRepository, eventRepository);
         SellerService sellerService = new SellerService(sellerRepository, productRepository,
                 eventRepository, itemRepository, itemService);

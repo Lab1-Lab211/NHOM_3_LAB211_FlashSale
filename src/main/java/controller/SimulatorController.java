@@ -15,4 +15,8 @@ public class SimulatorController {
     public List<SimulatorResult> runAll(String flashItemId, int threadCount, int quantityPerThread) {
         return simulatorService.runAll(flashItemId, threadCount, quantityPerThread);
     }
+
+    public int getAvailableCustomerCount() {
+        return simulatorService.getAvailableCustomerCount();
+    }
 }

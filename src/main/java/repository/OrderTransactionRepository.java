@@ -65,6 +65,18 @@ public class OrderTransactionRepository extends CsvRepository<OrderTransaction> 
         return findBy(t -> t.getMechanism() == mechanism && t.isSuccess() == success);
     }
 
+    /** Tìm toàn bộ kết quả simulator của một khách hàng. */
+    public List<OrderTransaction> findByCustomer(String customerId) {
+        return findBy(t -> t.getCustomerId() != null
+                && t.getCustomerId().equalsIgnoreCase(customerId));
+    }
+
+    /** Tìm các lần xử lý của cùng một request logic qua các cơ chế. */
+    public List<OrderTransaction> findByRequest(String requestId) {
+        return findBy(t -> t.getRequestId() != null
+                && t.getRequestId().equalsIgnoreCase(requestId));
+    }
+
     // -----------------------------------------------------------------------
     // THỐNG KÊ — Dùng cho Simulator Report
     // -----------------------------------------------------------------------

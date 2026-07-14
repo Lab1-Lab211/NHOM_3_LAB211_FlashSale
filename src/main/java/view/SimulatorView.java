@@ -16,7 +16,10 @@ public class SimulatorView {
 
     public List<SimulatorResult> runInteractive() {
         String flashItemId = input.readLine("Nhap flashItemId can simulate: ").trim();
-        int threadCount = input.readInt("Nhap so thread (100-500 de dung yeu cau T8): ");
+        int availableCustomers = simulatorController.getAvailableCustomerCount();
+        System.out.println("So customer co the dung de test: " + availableCustomers);
+        int threadCount = input.readInt(
+                "Nhap so thread (1-" + availableCustomers + ", moi thread = 1 customer): ");
         int quantity = input.readInt("Nhap so luong moi thread mua: ");
 
         List<SimulatorResult> results = simulatorController.runAll(flashItemId, threadCount, quantity);
@@ -48,6 +51,7 @@ public class SimulatorView {
                     result.isTargetPassed() ? "PASS" : "FAIL");
         }
         System.out.println("Da ghi log vao data/transactions.csv");
+        System.out.println("Moi transaction co customerId de truy vet khach hang.");
         System.out.println("Da ghi tong hop vao data/simulation_results.csv");
     }
 }

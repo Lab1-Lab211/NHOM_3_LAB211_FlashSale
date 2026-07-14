@@ -1,13 +1,16 @@
 package service;
 
+import model.Customer;
 import model.FlashSaleItem;
 import model.OrderTransaction;
 import model.enums.LockMechanism;
 import repository.FlashSaleItemRepository;
+import repository.CustomerRepository;
 import repository.OrderTransactionRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -28,20 +31,24 @@ public class SimulatorService {
 
     private final FlashSaleItemRepository flashSaleItemRepository;
     private final OrderTransactionRepository transactionRepository;
+    private final CustomerRepository customerRepository;
 
     public SimulatorService(FlashSaleItemRepository flashSaleItemRepository,
-                            OrderTransactionRepository transactionRepository) {
+                            OrderTransactionRepository transactionRepository,
+                            CustomerRepository customerRepository) {
         this.flashSaleItemRepository = flashSaleItemRepository;
         this.transactionRepository = transactionRepository;
+        this.customerRepository = customerRepository;
     }
 
     public List<SimulatorResult> runAll(String flashItemId, int threadCount, int quantityPerThread) {
         validateInput(flashItemId, threadCount, quantityPerThread);
+        List<Customer> selectedCustomers = selectCustomers(threadCount);
         transactionRepository.clearAll();
 
         List<SimulatorResult> results = new ArrayList<>();
         for (LockMechanism mechanism : LockMechanism.values()) {
-            results.add(runSingle(flashItemId, threadCount, quantityPerThread, mechanism));
+            results.add(runSingle(flashItemId, quantityPerThread, mechanism, selectedCustomers));
         }
         double baselineThroughput = results.stream()
                 .filter(r -> r.getMechanism() == LockMechanism.NO_LOCK)
@@ -58,6 +65,14 @@ public class SimulatorService {
     public SimulatorResult runSingle(String flashItemId, int threadCount, int quantityPerThread,
                                      LockMechanism mechanism) {
         validateInput(flashItemId, threadCount, quantityPerThread);
+        List<Customer> selectedCustomers = selectCustomers(threadCount);
+        return runSingle(flashItemId, quantityPerThread, mechanism, selectedCustomers);
+    }
+
+    private SimulatorResult runSingle(String flashItemId, int quantityPerThread,
+                                      LockMechanism mechanism,
+                                      List<Customer> selectedCustomers) {
+        int threadCount = selectedCustomers.size();
         if (mechanism == null) {
             mechanism = LockMechanism.NO_LOCK;
         }
@@ -76,6 +91,7 @@ public class SimulatorService {
 
         for (int i = 1; i <= threadCount; i++) {
             final int index = i;
+            final Customer customer = selectedCustomers.get(i - 1);
             final LockMechanism selectedMechanism = mechanism;
             executor.submit(() -> {
                 readyGate.countDown();
@@ -96,7 +112,11 @@ public class SimulatorService {
                     end = System.nanoTime();
                     transactions.add(new OrderTransaction(
                             String.format("TXN-%s-%05d", selectedMechanism.name(), index),
+                            String.format("REQ-SIM-%05d", index),
                             orderId,
+                            customer.getCustomerId(),
+                            flashItemId,
+                            quantityPerThread,
                             selectedMechanism,
                             Thread.currentThread().getName(),
                             start,
@@ -163,6 +183,26 @@ public class SimulatorService {
         if (quantityPerThread <= 0) {
             throw new IllegalArgumentException("quantityPerThread phai > 0");
         }
+    }
+
+    /** Số customer hiện có, cũng là số thread tối đa của một lần mô phỏng. */
+    public int getAvailableCustomerCount() {
+        return customerRepository.findAll().size();
+    }
+
+    private List<Customer> selectCustomers(int threadCount) {
+        List<Customer> customers = new ArrayList<>(customerRepository.findAll());
+        customers.sort(Comparator.comparing(Customer::getCustomerId,
+                String.CASE_INSENSITIVE_ORDER));
+        if (customers.isEmpty()) {
+            throw new IllegalArgumentException("customers.csv khong co customer de chay simulator");
+        }
+        if (threadCount > customers.size()) {
+            throw new IllegalArgumentException(String.format(
+                    "So thread (%d) vuot qua so customer trong customers.csv (%d)",
+                    threadCount, customers.size()));
+        }
+        return new ArrayList<>(customers.subList(0, threadCount));
     }
 
     private void awaitGate(CountDownLatch gate) {

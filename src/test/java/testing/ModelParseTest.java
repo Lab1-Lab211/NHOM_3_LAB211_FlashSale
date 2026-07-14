@@ -578,7 +578,7 @@ public class ModelParseTest {
         @Test
         @DisplayName("getCsvHeader() đúng format")
         void csvHeader() {
-            assertEquals("transactionId,orderId,mechanism,threadName,startTime,endTime,success,errorMessage",
+            assertEquals("transactionId,requestId,orderId,customerId,flashItemId,quantity,mechanism,threadName,startTime,endTime,success,errorMessage",
                     new OrderTransaction().getCsvHeader());
         }
 
