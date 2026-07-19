@@ -51,7 +51,7 @@ public class SimulatorService {
             results.add(runSingle(flashItemId, quantityPerThread, mechanism, selectedCustomers));
         }
         double baselineThroughput = results.stream()
-                .filter(r -> r.getMechanism() == LockMechanism.NO_LOCK)
+                .filter(r -> r.getMechanism() == SimulatorResult.BASELINE_MECHANISM)
                 .mapToDouble(SimulatorResult::getThroughput)
                 .findFirst()
                 .orElse(0.0);

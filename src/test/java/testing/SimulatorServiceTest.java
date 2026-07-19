@@ -49,8 +49,14 @@ public class SimulatorServiceTest {
         for (SimulatorResult result : results) {
             assertEquals(8, result.getSuccessCount() + result.getFailCount());
             assertTrue(result.getThroughput() >= 0.0);
+            assertTrue(result.getDurationMs() >= 0.0);
             assertTrue(result.getSafetyViolationRate() >= 0.0);
         }
+        SimulatorResult synchronizedResult = results.stream()
+                .filter(result -> result.getMechanism() == LockMechanism.SYNCHRONIZED)
+                .findFirst()
+                .orElseThrow(AssertionError::new);
+        assertEquals(0.0, synchronizedResult.getVsBaselinePercent(), 0.001);
         assertTrue(Files.exists(Paths.get(TRANSACTION_FILE)));
         OrderTransactionRepository transactionRepository =
                 new OrderTransactionRepository(TRANSACTION_FILE);

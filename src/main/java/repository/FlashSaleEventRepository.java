@@ -3,6 +3,8 @@ package repository;
 import model.FlashSaleEvent;
 import model.enums.SaleStatus;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 /**
@@ -24,6 +26,35 @@ public class FlashSaleEventRepository extends CsvRepository<FlashSaleEvent> {
      */
     public FlashSaleEventRepository(String filePath) {
         super(filePath, FlashSaleEvent::new);
+    }
+
+    /**
+     * Đồng bộ các sự kiện sắp diễn ra theo thời gian mỗi khi dữ liệu được đọc.
+     * Khi startTime đã tới, trạng thái tự chuyển từ SAP_DIEN_RA sang DANG_DIEN_RA.
+     */
+    @Override
+    public synchronized List<FlashSaleEvent> findAll() {
+        List<FlashSaleEvent> events = super.findAll();
+        LocalDateTime now = LocalDateTime.now();
+        boolean changed = false;
+
+        for (FlashSaleEvent event : events) {
+            if (event.getStatus() != SaleStatus.SAP_DIEN_RA) continue;
+            try {
+                LocalDateTime startTime = LocalDateTime.parse(event.getStartTime());
+                if (!now.isBefore(startTime)) {
+                    event.setStatus(SaleStatus.DANG_DIEN_RA);
+                    changed = true;
+                }
+            } catch (DateTimeParseException ignored) {
+                // Giữ nguyên trạng thái nếu dữ liệu thời gian cũ không đúng định dạng.
+            }
+        }
+
+        if (changed) {
+            rewriteAll(events);
+        }
+        return events;
     }
 
     // -----------------------------------------------------------------------

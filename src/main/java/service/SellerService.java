@@ -111,7 +111,7 @@ public class SellerService {
         }
 
         FlashSaleEvent event = new FlashSaleEvent(nextEventId(), cleanCsvText(name),
-                startTime.trim(), endTime.trim(), SaleStatus.CHO_PHE_DUYET, discountPercent);
+                startTime.trim(), endTime.trim(), SaleStatus.SAP_DIEN_RA, discountPercent);
         eventRepository.save(event);
         seller.addEventId(event.getEventId());
         sellerRepository.update(seller);
@@ -129,9 +129,8 @@ public class SellerService {
         }
         FlashSaleEvent event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale"));
-        if (event.getStatus() != SaleStatus.CHO_PHE_DUYET
-                && event.getStatus() != SaleStatus.TU_CHOI) {
-            throw new IllegalArgumentException("Chi duoc them hang khi Flash Sale cho duyet hoac bi tu choi");
+        if (event.getStatus() != SaleStatus.SAP_DIEN_RA) {
+            throw new IllegalArgumentException("Chi duoc them hang khi Flash Sale sap dien ra");
         }
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay san pham"));
@@ -165,6 +164,37 @@ public class SellerService {
         requireSeller(seller);
         if (!seller.ownsEvent(eventId)) return Optional.empty();
         return eventRepository.findById(eventId);
+    }
+
+    public FlashSaleEvent startOwnEvent(Seller seller, String eventId) {
+        requireSeller(seller);
+        if (!seller.ownsEvent(eventId)) {
+            throw new IllegalArgumentException("Flash Sale khong thuoc nguoi ban nay");
+        }
+        FlashSaleEvent event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale"));
+        if (event.getStatus() == SaleStatus.DANG_DIEN_RA) {
+            return event;
+        }
+        if (event.getStatus() == SaleStatus.SAP_DIEN_RA) {
+            throw new IllegalArgumentException("Flash Sale chua toi thoi gian bat dau");
+        }
+        throw new IllegalArgumentException("Chi duoc bat dau Flash Sale sap dien ra");
+    }
+
+    public FlashSaleEvent endOwnEvent(Seller seller, String eventId) {
+        requireSeller(seller);
+        if (!seller.ownsEvent(eventId)) {
+            throw new IllegalArgumentException("Flash Sale khong thuoc nguoi ban nay");
+        }
+        FlashSaleEvent event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale"));
+        if (event.getStatus() != SaleStatus.DANG_DIEN_RA) {
+            throw new IllegalArgumentException("Chi duoc ket thuc Flash Sale dang dien ra");
+        }
+        event.setStatus(SaleStatus.DA_KET_THUC);
+        eventRepository.update(event);
+        return event;
     }
 
     public FlashSaleEvent updateOwnEvent(Seller seller, String eventId, String name,
@@ -204,24 +234,6 @@ public class SellerService {
         return itemService.deleteItem(flashItemId);
     }
 
-    public FlashSaleEvent resubmitRejectedEvent(Seller seller, String eventId) {
-        requireSeller(seller);
-        if (!seller.ownsEvent(eventId)) {
-            throw new IllegalArgumentException("Flash Sale khong thuoc nguoi ban nay");
-        }
-        FlashSaleEvent event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale"));
-        if (event.getStatus() != SaleStatus.TU_CHOI) {
-            throw new IllegalArgumentException("Chi Flash Sale bi tu choi moi duoc gui lai");
-        }
-        if (itemRepository.findByEvent(eventId).isEmpty()) {
-            throw new IllegalArgumentException("Phai them it nhat mot san pham truoc khi gui lai");
-        }
-        event.setStatus(SaleStatus.CHO_PHE_DUYET);
-        eventRepository.update(event);
-        return event;
-    }
-
     public Optional<Product> findProductById(String productId) {
         return productRepository.findById(productId);
     }
@@ -233,9 +245,8 @@ public class SellerService {
         }
         FlashSaleEvent event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale"));
-        if (event.getStatus() != SaleStatus.CHO_PHE_DUYET
-                && event.getStatus() != SaleStatus.TU_CHOI) {
-            throw new IllegalArgumentException("Chi duoc sua Flash Sale cho duyet hoac bi tu choi");
+        if (event.getStatus() != SaleStatus.SAP_DIEN_RA) {
+            throw new IllegalArgumentException("Chi duoc sua Flash Sale sap dien ra");
         }
         return event;
     }
