@@ -78,6 +78,22 @@ public class OrderView {
         }
     }
 
+    public void confirmOrderReceived() {
+        if (!customerController.isLoggedIn()) {
+            System.out.println("Vui long login de xac nhan da nhan hang.");
+            return;
+        }
+        String orderId = input.readLine("Nhap Order ID da nhan: ").trim();
+        try {
+            Order order = orderController.confirmOrderReceived(
+                    customerController.getCurrentCustomer(), orderId);
+            System.out.println("Xac nhan da nhan hang thanh cong. Trang thai: "
+                    + order.getStatus().getMoTa());
+        } catch (FlashSaleException | IllegalArgumentException | IllegalStateException e) {
+            System.out.println("Xac nhan da nhan hang that bai: " + e.getMessage());
+        }
+    }
+
     private BookingResult placeOrder(LockMechanism mechanism) {
         if (!customerController.isLoggedIn()) {
             System.out.println("Vui long login hoac register truoc.");

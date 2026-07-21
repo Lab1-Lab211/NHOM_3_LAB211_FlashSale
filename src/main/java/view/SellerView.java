@@ -268,7 +268,7 @@ public class SellerView {
         try {
             List<Order> orders = sellerController.getReceivedOrders();
             if (orders.isEmpty()) {
-                System.out.println("Chua co don hang nao dat san pham trong Flash Sale cua ban.");
+                System.out.println("Chua co don hang nao dat san pham cua ban.");
                 return;
             }
             System.out.printf("%-12s %-12s %-12s %-20s %-22s %14s%n",
@@ -318,17 +318,19 @@ public class SellerView {
 
     private void updateOrderStatus() {
         String orderId = input.readLine("Order ID can cap nhat: ").trim();
-        System.out.println("1. Da xac nhan");
+        System.out.println("1. Xac nhan don hang");
         System.out.println("2. Dang chuan bi hang");
         System.out.println("3. Dang giao hang");
-        System.out.println("4. Hoan thanh");
+        System.out.println("4. Tu choi don dang cho xac nhan");
+        System.out.println("5. Giao hang that bai");
         int choice = input.readInt("Chon trang thai moi: ");
         OrderStatus status;
         switch (choice) {
             case 1: status = OrderStatus.DA_XAC_NHAN; break;
             case 2: status = OrderStatus.DANG_CHUAN_BI; break;
             case 3: status = OrderStatus.DANG_GIAO; break;
-            case 4: status = OrderStatus.HOAN_THANH; break;
+            case 4: status = OrderStatus.TU_CHOI; break;
+            case 5: status = OrderStatus.GIAO_THAT_BAI; break;
             default:
                 System.out.println("Trang thai khong hop le.");
                 return;

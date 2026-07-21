@@ -43,6 +43,8 @@ public class OrderServiceTest {
         cleanupSet("cancel");
         cleanupSet("seller");
         cleanupSet("regular");
+        cleanupSet("reject");
+        cleanupSet("delivery_failure");
     }
 
     @Test
@@ -59,13 +61,14 @@ public class OrderServiceTest {
         assertEquals(1, repos.orderRepository.count());
         assertEquals(1, repos.orderDetailRepository.count());
         assertEquals(200000.0, result.getOrder().getTotalAmount(), 0.01);
+        assertEquals(OrderStatus.CHO_XU_LY, result.getOrder().getStatus());
     }
 
     @Test
     public void placeOrderNoLockRejectsInactiveEvent() throws Exception {
         TestRepos repos = createRepos("inactive");
         FlashSaleEvent event = repos.eventRepository.findById("EVT-TEST").get();
-        event.setStatus(SaleStatus.SAP_DIEN_RA);
+        event.setStatus(SaleStatus.DA_KET_THUC);
         repos.eventRepository.update(event);
 
         assertThrows(EventNotActiveException.class,
@@ -86,14 +89,14 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void placeOrderNoLockAppliesTierDiscountAndUpgradesTier() throws Exception {
+    public void placeOrderNoLockAppliesTierDiscountAndUpgradesTierAfterBuyerReceives() throws Exception {
         TestRepos repos = createRepos("tier");
         Customer customer = new Customer(
                 "CUS-TEST", "Nguyen Van A", "a.nguyen@email.com", CustomerTier.PREMIUM, "2026-01-01");
         repos.customerRepository.save(customer);
         repos.orderRepository.save(new Order(
                 "ORD-00001", "CUS-TEST", "EVT-OLD",
-                "2026-01-01T00:00:00", OrderStatus.DA_XAC_NHAN, 900000.0));
+                "2026-01-01T00:00:00", OrderStatus.HOAN_THANH, 900000.0));
 
         BookingResult result = repos.orderService.placeOrderNoLock(customer, "FSI-TEST", 2);
 
@@ -101,7 +104,20 @@ public class OrderServiceTest {
         assertEquals(5.0, result.getDiscountPercent(), 0.01);
         assertEquals(10000.0, result.getDiscountAmount(), 0.01);
         assertEquals(190000.0, result.getOrder().getTotalAmount(), 0.01);
-        assertEquals(CustomerTier.VIP, result.getTierAfterOrder());
+        assertEquals(CustomerTier.PREMIUM, result.getTierAfterOrder());
+        assertEquals(CustomerTier.PREMIUM, customer.getTier());
+
+        Seller seller = new Seller(
+                "SEL-TEST", "Shop Test", "shop@test.com", "hash", "salt",
+                Collections.singletonList("PRD-TEST"),
+                Collections.singletonList("EVT-TEST"), "2026-01-01");
+        repos.orderService.updateOrderStatusForSeller(
+                seller, result.getOrder().getOrderId(), OrderStatus.DA_XAC_NHAN);
+        repos.orderService.updateOrderStatusForSeller(
+                seller, result.getOrder().getOrderId(), OrderStatus.DANG_CHUAN_BI);
+        repos.orderService.updateOrderStatusForSeller(
+                seller, result.getOrder().getOrderId(), OrderStatus.DANG_GIAO);
+        repos.orderService.confirmOrderReceived(customer, result.getOrder().getOrderId());
         assertEquals(CustomerTier.VIP, customer.getTier());
     }
 
@@ -135,6 +151,10 @@ public class OrderServiceTest {
         assertEquals(1, repos.orderService
                 .getOrderDetailsForSeller(seller, result.getOrder().getOrderId()).size());
 
+        Order confirmed = repos.orderService.updateOrderStatusForSeller(
+                seller, result.getOrder().getOrderId(), OrderStatus.DA_XAC_NHAN);
+        assertEquals(OrderStatus.DA_XAC_NHAN, confirmed.getStatus());
+
         Order preparing = repos.orderService.updateOrderStatusForSeller(
                 seller, result.getOrder().getOrderId(), OrderStatus.DANG_CHUAN_BI);
         assertEquals(OrderStatus.DANG_CHUAN_BI, preparing.getStatus());
@@ -145,9 +165,15 @@ public class OrderServiceTest {
 
         Order shipping = repos.orderService.updateOrderStatusForSeller(
                 seller, result.getOrder().getOrderId(), OrderStatus.DANG_GIAO);
-        Order completed = repos.orderService.updateOrderStatusForSeller(
-                seller, result.getOrder().getOrderId(), OrderStatus.HOAN_THANH);
         assertEquals(OrderStatus.DANG_GIAO, shipping.getStatus());
+        assertThrows(IllegalArgumentException.class,
+                () -> repos.orderService.updateOrderStatusForSeller(
+                        seller, result.getOrder().getOrderId(), OrderStatus.HOAN_THANH));
+
+        Customer customer = new Customer(
+                "CUS-TEST", "Buyer Test", "buyer@test.com", CustomerTier.REGULAR, "2026-01-01");
+        Order completed = repos.orderService.confirmOrderReceived(
+                customer, result.getOrder().getOrderId());
         assertEquals(OrderStatus.HOAN_THANH, completed.getStatus());
 
         Seller anotherSeller = new Seller(
@@ -177,6 +203,50 @@ public class OrderServiceTest {
 
         repos.orderService.cancelOrder(customer, result.getOrder().getOrderId());
         assertEquals(5, repos.productRepository.findById("PRD-TEST").get().getStock());
+    }
+
+    @Test
+    public void sellerCanRejectPendingOrderAndRestoreInventory() throws Exception {
+        TestRepos repos = createRepos("reject");
+        Seller seller = new Seller(
+                "SEL-TEST", "Shop Test", "shop@test.com", "hash", "salt",
+                Collections.singletonList("PRD-TEST"),
+                Collections.singletonList("EVT-TEST"), "2026-01-01");
+
+        BookingResult result = repos.orderService.placeOrderNoLock("CUS-TEST", "FSI-TEST", 2);
+        Order rejected = repos.orderService.updateOrderStatusForSeller(
+                seller, result.getOrder().getOrderId(), OrderStatus.TU_CHOI);
+
+        assertEquals(OrderStatus.TU_CHOI, rejected.getStatus());
+        assertEquals(0, repos.itemRepository.findById("FSI-TEST").get().getSoldQty());
+        assertThrows(IllegalArgumentException.class,
+                () -> repos.orderService.updateOrderStatusForSeller(
+                        seller, rejected.getOrderId(), OrderStatus.DA_XAC_NHAN));
+    }
+
+    @Test
+    public void sellerCanMarkDeliveryFailureOnlyAfterShippingAndRestoreInventory() throws Exception {
+        TestRepos repos = createRepos("delivery_failure");
+        Seller seller = new Seller(
+                "SEL-TEST", "Shop Test", "shop@test.com", "hash", "salt",
+                Collections.singletonList("PRD-TEST"),
+                Collections.singletonList("EVT-TEST"), "2026-01-01");
+
+        BookingResult result = repos.orderService.placeOrderNoLock("CUS-TEST", "FSI-TEST", 1);
+        assertThrows(IllegalArgumentException.class,
+                () -> repos.orderService.updateOrderStatusForSeller(
+                        seller, result.getOrder().getOrderId(), OrderStatus.GIAO_THAT_BAI));
+        repos.orderService.updateOrderStatusForSeller(
+                seller, result.getOrder().getOrderId(), OrderStatus.DA_XAC_NHAN);
+        repos.orderService.updateOrderStatusForSeller(
+                seller, result.getOrder().getOrderId(), OrderStatus.DANG_CHUAN_BI);
+        repos.orderService.updateOrderStatusForSeller(
+                seller, result.getOrder().getOrderId(), OrderStatus.DANG_GIAO);
+
+        Order failed = repos.orderService.updateOrderStatusForSeller(
+                seller, result.getOrder().getOrderId(), OrderStatus.GIAO_THAT_BAI);
+        assertEquals(OrderStatus.GIAO_THAT_BAI, failed.getStatus());
+        assertEquals(0, repos.itemRepository.findById("FSI-TEST").get().getSoldQty());
     }
 
     private TestRepos createRepos(String suffix) {

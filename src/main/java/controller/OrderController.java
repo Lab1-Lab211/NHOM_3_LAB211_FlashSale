@@ -55,4 +55,8 @@ public class OrderController {
     public Order cancelOrder(Customer customer, String orderId) throws EntityNotFoundException {
         return orderService.cancelOrder(customer, orderId);
     }
+
+    public Order confirmOrderReceived(Customer customer, String orderId) throws EntityNotFoundException {
+        return orderService.confirmOrderReceived(customer, orderId);
+    }
 }
