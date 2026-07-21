@@ -53,7 +53,7 @@ public class OrderRepository extends CsvRepository<Order> {
     /**
      * Tìm tất cả đơn hàng theo trạng thái.
      *
-     * @param status trạng thái cần lọc (CHO_XU_LY / DA_XAC_NHAN / THAT_BAI / DA_HUY)
+     * @param status trạng thái cần lọc (CHO_XU_LY / DA_XAC_NHAN / GIAO_THAT_BAI / DA_HUY)
      * @return danh sách đơn hàng có trạng thái tương ứng
      */
     public List<Order> findByStatus(OrderStatus status) {

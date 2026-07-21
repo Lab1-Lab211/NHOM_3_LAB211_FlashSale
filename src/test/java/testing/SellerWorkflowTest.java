@@ -79,7 +79,8 @@ public class SellerWorkflowTest {
                 seller, "May nuoc nong", ProductCategory.GIA_DUNG, 1000000, 20);
         FlashSaleEvent event = sellerService.createFlashSaleRequest(
                 seller, "Sale lan dau", "2999-02-01T08:00:00", "2999-02-01T10:00:00", 20);
-        sellerService.addItemToOwnEvent(seller, event.getEventId(), product.getProductId(), 5, 800000);
+        FlashSaleItem originalItem = sellerService.addItemToOwnEvent(
+                seller, event.getEventId(), product.getProductId(), 5, 800000);
 
         FlashSaleEvent updated = sellerService.updateOwnEvent(
                 seller, event.getEventId(), "Sale da chinh sua", "", "", 30);
@@ -88,6 +89,9 @@ public class SellerWorkflowTest {
         FlashSaleItem newItem = sellerService.addItemToOwnEvent(
                 seller, event.getEventId(), product.getProductId(), 5, 700000);
         assertTrue(sellerService.removeItemFromOwnEvent(seller, event.getEventId(), newItem.getFlashItemId()));
+        assertEquals(1, itemRepo.findByEvent(event.getEventId()).size());
+        assertTrue(sellerService.removeItemFromOwnEvent(
+                seller, event.getEventId(), originalItem.getFlashItemId()));
         assertTrue(itemRepo.findByEvent(event.getEventId()).isEmpty());
 
         sellerService.addItemToOwnEvent(seller, event.getEventId(), product.getProductId(), 5, 700000);

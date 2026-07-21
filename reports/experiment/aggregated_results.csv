@@ -1,0 +1,5 @@
+﻿mechanism,repeats,meanSuccessCount,sdSuccessCount,meanFinalSoldQty,inventoryUtilizationPct,meanTotalTimeMs,sdTotalTimeMs,meanThroughputTps,sdThroughputTps,meanAvgLatencyMs,meanNegativeStockRatePct,meanConsistencyViolationRatePct,vsSynchronizedMeanPct,allRepeatsSafe,rqPass
+NO_LOCK,3,1000.0000,0.0000,1.0000,1.0417,788.4911,227.6944,1358.2919,468.1574,723.2215,90.4000,99.9000,2622.4879,false,false
+FILE_LOCK,3,58.3333,15.0111,58.3333,60.7639,365.0598,15.1281,160.7746,45.2681,204.3404,0.0000,0.0000,222.2480,true,true
+SYNCHRONIZED,3,96.0000,0.0000,96.0000,100.0000,1942.3715,236.7700,49.8916,5.7569,1710.5127,0.0000,0.0000,0.0000,true,true
+OPTIMISTIC,3,96.0000,0.0000,96.0000,100.0000,2474.8007,501.9790,39.7679,7.2249,2211.5198,0.0000,0.0000,-20.2913,true,true

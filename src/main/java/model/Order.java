@@ -48,7 +48,11 @@ public class Order extends BaseEntity {
         this.customerId = parts[1].trim();
         this.eventId = parts[2].trim();
         this.orderTime = parts[3].trim();
-        this.status = OrderStatus.valueOf(parts[4].trim());
+        String rawStatus = parts[4].trim();
+        // Tuong thich du lieu cu: THAT_BAI truoc day qua chung chung.
+        this.status = "THAT_BAI".equals(rawStatus)
+                ? OrderStatus.GIAO_THAT_BAI
+                : OrderStatus.valueOf(rawStatus);
         this.totalAmount = Double.parseDouble(parts[5].trim());
     }
 

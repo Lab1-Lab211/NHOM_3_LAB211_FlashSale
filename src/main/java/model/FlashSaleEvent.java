@@ -74,6 +74,23 @@ public class FlashSaleEvent extends BaseEntity {
     public SaleStatus getStatus() { return status; }
     public void setStatus(SaleStatus status) { this.status = status; }
 
+    /**
+     * Trả về trạng thái thực tế dựa theo thời gian hiện tại.
+     * Chỉ dùng khi hiển thị — không thay đổi giá trị lưu CSV.
+     */
+    public SaleStatus getEffectiveStatus() {
+        try {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            java.time.LocalDateTime start = java.time.LocalDateTime.parse(startTime);
+            java.time.LocalDateTime end = java.time.LocalDateTime.parse(endTime);
+            if (now.isBefore(start)) return SaleStatus.SAP_DIEN_RA;
+            if (now.isAfter(end))   return SaleStatus.DA_KET_THUC;
+            return SaleStatus.DANG_DIEN_RA;
+        } catch (Exception e) {
+            return status; // fallback nếu parse lỗi
+        }
+    }
+
     public int getDiscountPercent() { return discountPercent; }
     public void setDiscountPercent(int discountPercent) { this.discountPercent = discountPercent; }
 

@@ -152,7 +152,7 @@ public class OrderService {
                 customer.getCustomerId(),
                 "NORMAL",
                 LocalDateTime.now().format(DATE_TIME_FORMATTER),
-                OrderStatus.DA_XAC_NHAN,
+                OrderStatus.CHO_XU_LY,
                 totalAmount);
 
         // Dung productId truc tiep lam flashItemId cho order detail
@@ -165,10 +165,10 @@ public class OrderService {
 
         orderRepository.save(order);
         orderDetailRepository.save(detail);
-        CustomerTier tierAfter = updateTierAfterSuccessfulOrder(customer, customer.getCustomerId());
+        CustomerTier tierAfter = tier;
 
         // Tao mot BookingResult gia lap (khong co FlashSaleItem/Event)
-        return new BookingResult(order, detail, null, "Dat hang binh thuong thanh cong",
+        return new BookingResult(order, detail, null, "Dat hang thanh cong, cho shop xac nhan",
                 tier, tierAfter, subtotalAmount, discountPercent, discountAmount);
     }
 
@@ -196,14 +196,14 @@ public class OrderService {
         String orderId = nextOrderId();
         Order order = new Order(orderId, customer.getCustomerId(), "REGULAR",
                 LocalDateTime.now().format(DATE_TIME_FORMATTER),
-                OrderStatus.DA_XAC_NHAN, totalAmount);
+                OrderStatus.CHO_XU_LY, totalAmount);
         OrderDetail detail = new OrderDetail(nextDetailId(), orderId, productId,
                 quantity, product.getOriginalPrice());
         orderRepository.save(order);
         orderDetailRepository.save(detail);
-        CustomerTier tierAfterOrder = updateTierAfterSuccessfulOrder(customer, customer.getCustomerId());
+        CustomerTier tierAfterOrder = tierBeforeOrder;
 
-        return new BookingResult(order, detail, null, "Dat san pham thuong thanh cong",
+        return new BookingResult(order, detail, null, "Dat hang thanh cong, cho shop xac nhan",
                 tierBeforeOrder, tierAfterOrder, subtotalAmount, discountPercent, discountAmount);
     }
 
@@ -230,7 +230,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
         if (!sellerOwnsOrder(seller, order)) {
-            throw new IllegalArgumentException("Don hang khong thuoc Flash Sale cua ban");
+            throw new IllegalArgumentException("Don hang khong thuoc san pham cua ban");
         }
         return order;
     }
@@ -245,13 +245,32 @@ public class OrderService {
         return flashSaleItemRepository.findById(flashItemId);
     }
 
-    public Order updateOrderStatusForSeller(Seller seller, String orderId, OrderStatus newStatus)
+    public synchronized Order updateOrderStatusForSeller(Seller seller, String orderId, OrderStatus newStatus)
             throws EntityNotFoundException {
         Order order = getOrderForSeller(seller, orderId);
         if (newStatus == null) {
             throw new IllegalArgumentException("Trang thai moi khong hop le");
         }
-        OrderStatus expected = nextStatus(order.getStatus());
+        if (newStatus == OrderStatus.TU_CHOI) {
+            if (order.getStatus() != OrderStatus.CHO_XU_LY) {
+                throw new IllegalArgumentException("Chi duoc tu choi don dang cho shop xac nhan");
+            }
+            restoreOrderInventory(order);
+            order.setStatus(OrderStatus.TU_CHOI);
+            orderRepository.update(order);
+            return order;
+        }
+        if (newStatus == OrderStatus.GIAO_THAT_BAI) {
+            if (order.getStatus() != OrderStatus.DANG_GIAO) {
+                throw new IllegalArgumentException("Chi duoc bao giao that bai khi don dang giao hang");
+            }
+            restoreOrderInventory(order);
+            order.setStatus(OrderStatus.GIAO_THAT_BAI);
+            orderRepository.update(order);
+            return order;
+        }
+
+        OrderStatus expected = nextSellerStatus(order.getStatus());
         if (expected == null) {
             throw new IllegalArgumentException("Don hang o trang thai "
                     + order.getStatus().getMoTa() + " khong the cap nhat tiep");
@@ -266,7 +285,28 @@ public class OrderService {
 
     }
 
-    public Order cancelOrder(Customer customer, String orderId) throws EntityNotFoundException {
+    public synchronized Order confirmOrderReceived(Customer customer, String orderId)
+            throws EntityNotFoundException {
+        if (customer == null) {
+            throw new IllegalStateException("Vui long login de xac nhan da nhan hang");
+        }
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+        if (!order.getCustomerId().equalsIgnoreCase(customer.getCustomerId())) {
+            throw new IllegalArgumentException("Ban khong co quyen xac nhan don hang nay");
+        }
+        if (order.getStatus() != OrderStatus.DANG_GIAO) {
+            throw new IllegalArgumentException("Chi duoc xac nhan da nhan khi don dang giao hang");
+        }
+
+        order.setStatus(OrderStatus.HOAN_THANH);
+        orderRepository.update(order);
+        updateTierAfterSuccessfulOrder(customer, customer.getCustomerId());
+        return order;
+    }
+
+    public synchronized Order cancelOrder(Customer customer, String orderId)
+            throws EntityNotFoundException {
         if (customer == null) throw new IllegalStateException("Vui long login de huy don hang");
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
@@ -274,17 +314,25 @@ public class OrderService {
             throw new IllegalArgumentException("Ban khong co quyen huy don hang nay");
         }
         if (order.getStatus() == OrderStatus.DA_HUY) {
-            throw new IllegalArgumentException("Don hang da duoc huy truoc do");
+            throw new IllegalArgumentException("Don hang nay da duoc huy truoc do.");
         }
-        if (order.getStatus() == OrderStatus.THAT_BAI) {
-            throw new IllegalArgumentException("Khong the huy don hang that bai");
+        if (order.getStatus() == OrderStatus.HOAN_THANH
+                || order.getStatus() == OrderStatus.GIAO_THAT_BAI
+                || order.getStatus() == OrderStatus.TU_CHOI) {
+            throw new IllegalArgumentException("Don hang da hoan thanh hoac giao that bai, khong the huy.");
         }
-        if (order.getStatus() == OrderStatus.DANG_GIAO
-                || order.getStatus() == OrderStatus.HOAN_THANH) {
-            throw new IllegalArgumentException("Khong the huy don dang giao hoac da hoan thanh");
+        if (order.getStatus() == OrderStatus.DANG_GIAO) {
+            throw new IllegalArgumentException("Don hang dang duoc giao, khong the huy. Vui long tu choi nhan hang khi shipper den.");
         }
 
-        for (OrderDetail detail : orderDetailRepository.findByOrder(orderId)) {
+        restoreOrderInventory(order);
+        order.setStatus(OrderStatus.DA_HUY);
+        orderRepository.update(order);
+        return order;
+    }
+
+    private void restoreOrderInventory(Order order) throws EntityNotFoundException {
+        for (OrderDetail detail : orderDetailRepository.findByOrder(order.getOrderId())) {
             String itemReference = detail.getFlashItemId();
             if (itemReference != null && itemReference.startsWith("PRD-")) {
                 if (productRepository == null) {
@@ -295,15 +343,6 @@ public class OrderService {
                 flashSaleItemRepository.restoreSoldQuantity(itemReference, detail.getQuantity());
             }
         }
-        order.setStatus(OrderStatus.DA_HUY);
-        orderRepository.update(order);
-
-        if (customerRepository != null) {
-            CustomerTier recalculated = calculateTierByTotalSpent(totalConfirmedSpent(customer.getCustomerId()));
-            customer.setTier(recalculated);
-            customerRepository.update(customer);
-        }
-        return order;
     }
 
     private BookingResult placeOrder(String customerId, CustomerTier tierBeforeOrder,
@@ -348,7 +387,7 @@ public class OrderService {
                 customerId,
                 event.getEventId(),
                 LocalDateTime.now().format(DATE_TIME_FORMATTER),
-                OrderStatus.DA_XAC_NHAN,
+                OrderStatus.CHO_XU_LY,
                 totalAmount);
         OrderDetail detail = new OrderDetail(
                 detailId,
@@ -359,9 +398,10 @@ public class OrderService {
 
         orderRepository.save(order);
         orderDetailRepository.save(detail);
-        CustomerTier tierAfterOrder = updateTierAfterSuccessfulOrder(customerToUpdate, customerId);
+        CustomerTier tierAfterOrder = tierBeforeOrder;
 
-        return new BookingResult(order, detail, updatedItem, "Dat hang thanh cong bang " + mechanism.name(),
+        return new BookingResult(order, detail, updatedItem,
+                "Dat hang thanh cong bang " + mechanism.name() + ", cho shop xac nhan",
                 tierBeforeOrder, tierAfterOrder, subtotalAmount, discountPercent, discountAmount);
     }
 
@@ -405,6 +445,11 @@ public class OrderService {
         int total = 0;
         List<Order> orders = orderRepository.findByCustomerAndEvent(customerId, eventId);
         for (Order order : orders) {
+            if (order.getStatus() == OrderStatus.DA_HUY
+                    || order.getStatus() == OrderStatus.TU_CHOI
+                    || order.getStatus() == OrderStatus.GIAO_THAT_BAI) {
+                continue;
+            }
             total += orderDetailRepository.soLuongDaMuaTrongDon(order.getOrderId(), flashItemId);
         }
         return total;
@@ -465,21 +510,17 @@ public class OrderService {
         return false;
     }
 
-    private OrderStatus nextStatus(OrderStatus current) {
+    private OrderStatus nextSellerStatus(OrderStatus current) {
         switch (current) {
             case CHO_XU_LY: return OrderStatus.DA_XAC_NHAN;
             case DA_XAC_NHAN: return OrderStatus.DANG_CHUAN_BI;
             case DANG_CHUAN_BI: return OrderStatus.DANG_GIAO;
-            case DANG_GIAO: return OrderStatus.HOAN_THANH;
             default: return null;
         }
     }
 
     private boolean isSuccessfulOrder(OrderStatus status) {
-        return status == OrderStatus.DA_XAC_NHAN
-                || status == OrderStatus.DANG_CHUAN_BI
-                || status == OrderStatus.DANG_GIAO
-                || status == OrderStatus.HOAN_THANH;
+        return status == OrderStatus.HOAN_THANH;
     }
 
     private CustomerTier calculateTierByTotalSpent(double totalSpent) {

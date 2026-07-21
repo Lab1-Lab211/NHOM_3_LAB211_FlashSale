@@ -172,9 +172,12 @@ public class MainView {
                         orderView.cancelMyOrder();
                         break;
                     case "10":
-                        reportView.showBookingResult(lastBookingResult);
+                        orderView.confirmOrderReceived();
                         break;
                     case "11":
+                        reportView.showBookingResult(lastBookingResult);
+                        break;
+                    case "12":
                         customerController.logout();
                         System.out.println("Da dang xuat nguoi mua.");
                         break;
@@ -210,8 +213,9 @@ public class MainView {
         System.out.println("7. Dat hang (Flash Sale hoac san pham thuong)");
         System.out.println("8. Xem trang thai/lich su don hang");
         System.out.println("9. Huy don hang");
-        System.out.println("10. Xem ket qua dat hang gan nhat");
-        System.out.println("11. Dang xuat");
+        System.out.println("10. Xac nhan da nhan hang");
+        System.out.println("11. Xem ket qua dat hang gan nhat");
+        System.out.println("12. Dang xuat");
         System.out.println("0. Quay lai chon role");
     }
 
