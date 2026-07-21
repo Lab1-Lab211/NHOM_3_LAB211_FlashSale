@@ -32,17 +32,7 @@ public class OrderView {
     }
 
     public BookingResult placeOrderSafely() {
-        if (!customerController.isLoggedIn()) {
-            System.out.println("Vui long login hoac register truoc.");
-            return null;
-        }
-        System.out.println("1. Dat san pham Flash Sale (FSI-...)");
-        System.out.println("2. Dat san pham thuong (PRD-...)");
-        int choice = input.readInt("Chon loai don hang: ");
-        if (choice == 1) return placeOrder(LockMechanism.SYNCHRONIZED);
-        if (choice == 2) return placeRegularProductOrder();
-        System.out.println("Loai don hang khong hop le.");
-        return null;
+        return placeOrder(LockMechanism.SYNCHRONIZED);
     }
 
     public void showMyOrders() {

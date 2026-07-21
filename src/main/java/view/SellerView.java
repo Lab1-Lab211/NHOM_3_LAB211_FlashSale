@@ -145,8 +145,9 @@ public class SellerView {
         }
         for (FlashSaleEvent event : events) {
             System.out.printf("%s | %s | %s | %s -> %s | giam %d%%%n",
-                    event.getEventId(), event.getEventName(), event.getStatus().getMoTa(),
+                    event.getEventId(), event.getEventName(), event.getEffectiveStatus().getMoTa(),
                     event.getStartTime(), event.getEndTime(), event.getDiscountPercent());
+
         }
     }
 
@@ -177,7 +178,7 @@ public class SellerView {
             FlashSaleEvent event = sellerController.findOwnEvent(eventId)
                     .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale cua ban"));
             System.out.printf("%s | %s | %s | %s -> %s | giam %d%%%n",
-                    event.getEventId(), event.getEventName(), event.getStatus().getMoTa(),
+                    event.getEventId(), event.getEventName(), event.getEffectiveStatus().getMoTa(),
                     event.getStartTime(), event.getEndTime(), event.getDiscountPercent());
             printEventItems(eventId);
         } catch (IllegalArgumentException | IllegalStateException e) {

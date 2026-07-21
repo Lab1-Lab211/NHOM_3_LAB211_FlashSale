@@ -152,7 +152,7 @@ public class OrderService {
                 customer.getCustomerId(),
                 "NORMAL",
                 LocalDateTime.now().format(DATE_TIME_FORMATTER),
-                OrderStatus.DA_XAC_NHAN,
+                OrderStatus.CHO_XU_LY,
                 totalAmount);
 
         // Dung productId truc tiep lam flashItemId cho order detail
@@ -196,7 +196,7 @@ public class OrderService {
         String orderId = nextOrderId();
         Order order = new Order(orderId, customer.getCustomerId(), "REGULAR",
                 LocalDateTime.now().format(DATE_TIME_FORMATTER),
-                OrderStatus.DA_XAC_NHAN, totalAmount);
+                OrderStatus.CHO_XU_LY, totalAmount);
         OrderDetail detail = new OrderDetail(nextDetailId(), orderId, productId,
                 quantity, product.getOriginalPrice());
         orderRepository.save(order);
@@ -348,7 +348,7 @@ public class OrderService {
                 customerId,
                 event.getEventId(),
                 LocalDateTime.now().format(DATE_TIME_FORMATTER),
-                OrderStatus.DA_XAC_NHAN,
+                OrderStatus.CHO_XU_LY,
                 totalAmount);
         OrderDetail detail = new OrderDetail(
                 detailId,
@@ -476,7 +476,8 @@ public class OrderService {
     }
 
     private boolean isSuccessfulOrder(OrderStatus status) {
-        return status == OrderStatus.DA_XAC_NHAN
+        return status == OrderStatus.CHO_XU_LY
+                || status == OrderStatus.DA_XAC_NHAN
                 || status == OrderStatus.DANG_CHUAN_BI
                 || status == OrderStatus.DANG_GIAO
                 || status == OrderStatus.HOAN_THANH;
