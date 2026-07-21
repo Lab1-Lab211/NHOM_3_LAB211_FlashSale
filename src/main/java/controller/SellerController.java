@@ -82,8 +82,12 @@ public class SellerController {
         return sellerService.removeItemFromOwnEvent(currentSeller, eventId, flashItemId);
     }
 
-    public FlashSaleEvent resubmit(String eventId) {
-        return sellerService.resubmitRejectedEvent(currentSeller, eventId);
+    public FlashSaleEvent startEvent(String eventId) {
+        return sellerService.startOwnEvent(currentSeller, eventId);
+    }
+
+    public FlashSaleEvent endEvent(String eventId) {
+        return sellerService.endOwnEvent(currentSeller, eventId);
     }
 
     public Optional<Product> findProductById(String productId) {

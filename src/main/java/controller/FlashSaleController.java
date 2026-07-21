@@ -18,44 +18,8 @@ public class FlashSaleController {
         return flashSaleService.getAllEvents();
     }
 
-    public FlashSaleEvent createEvent(FlashSaleEvent event) {
-        return flashSaleService.createEvent(event);
-    }
-
-    public boolean updateEvent(FlashSaleEvent event) {
-        return flashSaleService.updateEvent(event);
-    }
-
-    public boolean deleteEvent(String eventId) {
-        return flashSaleService.deleteEvent(eventId);
-    }
-
     public List<FlashSaleEvent> getActiveEvents() {
         return flashSaleService.listActiveEvents();
-    }
-
-    public List<FlashSaleEvent> getPendingApprovalEvents() {
-        return flashSaleService.listPendingApprovalEvents();
-    }
-
-    public Optional<FlashSaleEvent> approveEvent(String eventId) {
-        return flashSaleService.approveEvent(eventId);
-    }
-
-    public Optional<FlashSaleEvent> rejectEvent(String eventId) {
-        return flashSaleService.rejectEvent(eventId);
-    }
-
-    public List<FlashSaleItem> getAllItems() {
-        return flashSaleService.getAllItems();
-    }
-
-    public FlashSaleItem addItem(FlashSaleItem item) {
-        return flashSaleService.addItem(item);
-    }
-
-    public boolean deleteItem(String flashItemId) {
-        return flashSaleService.deleteItem(flashItemId);
     }
 
     public List<FlashSaleItem> getActiveItems() {
@@ -68,10 +32,6 @@ public class FlashSaleController {
 
     public List<FlashSaleItem> getActiveItemsByEvent(String eventId) {
         return flashSaleService.listActiveAvailableItemsByEvent(eventId);
-    }
-
-    public Optional<FlashSaleEvent> startEvent(String eventId) {
-        return flashSaleService.startEvent(eventId);
     }
 
     public Optional<FlashSaleEvent> endEvent(String eventId) {

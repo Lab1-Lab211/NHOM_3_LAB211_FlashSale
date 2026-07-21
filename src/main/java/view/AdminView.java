@@ -33,24 +33,16 @@ public class AdminView {
         boolean running = true;
         while (running) {
             System.out.println("\n===== QUAN TRI VIEN =====");
-            System.out.println("1. Xem Flash Sale cho phe duyet");
-            System.out.println("2. Phe duyet Flash Sale");
-            System.out.println("3. Tu choi Flash Sale");
-            System.out.println("4. Xem tat ca Flash Sale");
-            System.out.println("5. Bat dau Flash Sale da duyet");
-            System.out.println("6. Ket thuc Flash Sale");
-            System.out.println("7. Chay Simulator 4 co che lock");
+            System.out.println("1. Xem tat ca Flash Sale");
+            System.out.println("2. Ket thuc Flash Sale");
+            System.out.println("3. Chay Simulator 4 co che lock");
             System.out.println("0. Dang xuat Admin");
             String choice = input.readLine("Chon: ").trim();
             try {
                 switch (choice) {
-                    case "1": printEvents(flashSaleController.getPendingApprovalEvents()); break;
-                    case "2": approve(); break;
-                    case "3": reject(); break;
-                    case "4": printEvents(flashSaleController.getAllEvents()); break;
-                    case "5": changeStatus(true); break;
-                    case "6": changeStatus(false); break;
-                    case "7": simulatorView.runInteractive(); break;
+                    case "1": printEvents(flashSaleController.getAllEvents()); break;
+                    case "2": endEvent(); break;
+                    case "3": simulatorView.runInteractive(); break;
                     case "0": running = false; break;
                     default: System.out.println("Lua chon khong hop le.");
                 }
@@ -60,27 +52,9 @@ public class AdminView {
         }
     }
 
-    private void approve() {
-        String eventId = input.readLine("Event ID can phe duyet: ").trim();
-        Optional<FlashSaleEvent> event = flashSaleController.approveEvent(eventId);
-        System.out.println(event.isPresent()
-                ? "Phe duyet thanh cong. Trang thai: " + event.get().getStatus().getMoTa()
-                : "Khong tim thay Flash Sale.");
-    }
-
-    private void reject() {
-        String eventId = input.readLine("Event ID can tu choi: ").trim();
-        Optional<FlashSaleEvent> event = flashSaleController.rejectEvent(eventId);
-        System.out.println(event.isPresent()
-                ? "Da tu choi Flash Sale va hoan lai hang chua ban."
-                : "Khong tim thay Flash Sale.");
-    }
-
-    private void changeStatus(boolean start) {
-        String eventId = input.readLine("Event ID: ").trim();
-        Optional<FlashSaleEvent> event = start
-                ? flashSaleController.startEvent(eventId)
-                : flashSaleController.endEvent(eventId);
+    private void endEvent() {
+        String eventId = input.readLine("Event ID can ket thuc: ").trim();
+        Optional<FlashSaleEvent> event = flashSaleController.endEvent(eventId);
         System.out.println(event.isPresent()
                 ? "Cap nhat trang thai thanh cong: " + event.get().getStatus().getMoTa()
                 : "Khong tim thay Flash Sale.");

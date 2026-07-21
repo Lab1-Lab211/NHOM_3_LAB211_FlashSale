@@ -647,20 +647,18 @@ public class ModelParseTest {
         }
 
         @Test
-        @DisplayName("SaleStatus: có đủ trạng thái phê duyệt và vận hành")
+        @DisplayName("SaleStatus: có đủ 3 trạng thái vận hành")
         void saleStatus() {
-            assertEquals(5, SaleStatus.values().length);
-            assertEquals(SaleStatus.CHO_PHE_DUYET, SaleStatus.valueOf("CHO_PHE_DUYET"));
-            assertEquals(SaleStatus.TU_CHOI, SaleStatus.valueOf("TU_CHOI"));
+            assertEquals(3, SaleStatus.values().length);
             assertEquals(SaleStatus.SAP_DIEN_RA, SaleStatus.valueOf("SAP_DIEN_RA"));
             assertEquals(SaleStatus.DANG_DIEN_RA, SaleStatus.valueOf("DANG_DIEN_RA"));
             assertEquals(SaleStatus.DA_KET_THUC, SaleStatus.valueOf("DA_KET_THUC"));
         }
 
         @Test
-        @DisplayName("OrderStatus: có đúng 7 giá trị và getMoTa() không null")
+        @DisplayName("OrderStatus: có đúng 8 giá trị và getMoTa() không null")
         void orderStatus() {
-            assertEquals(7, OrderStatus.values().length);
+            assertEquals(8, OrderStatus.values().length);
             for (OrderStatus status : OrderStatus.values()) {
                 assertNotNull(status.getMoTa(), status.name() + ".getMoTa() không được null");
             }

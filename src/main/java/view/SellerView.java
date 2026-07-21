@@ -47,11 +47,12 @@ public class SellerView {
                     case "5": showEventDetails(); break;
                     case "6": listEventItems(); break;
                     case "7": editFlashSale(); break;
-                    case "8": resubmitFlashSale(); break;
-                    case "9": listReceivedOrders(); break;
-                    case "10": showReceivedOrderDetails(); break;
-                    case "11": updateOrderStatus(); break;
-                    case "12": sellerController.logout(); System.out.println("Da dang xuat nguoi ban."); break;
+                    case "8": startFlashSale(); break;
+                    case "9": endFlashSale(); break;
+                    case "10": listReceivedOrders(); break;
+                    case "11": showReceivedOrderDetails(); break;
+                    case "12": updateOrderStatus(); break;
+                    case "13": sellerController.logout(); System.out.println("Da dang xuat nguoi ban."); break;
                     case "0": sellerController.logout(); running = false; break;
                     default: System.out.println("Lua chon khong hop le.");
                 }
@@ -64,16 +65,17 @@ public class SellerView {
         System.out.println("\n===== NGUOI BAN: " + seller.getSellerId() + " - " + seller.getName() + " =====");
         System.out.println("1. Xem san pham cua toi");
         System.out.println("2. Them san pham moi");
-        System.out.println("3. Xem Flash Sale cua toi va trang thai phe duyet");
-        System.out.println("4. Tao Flash Sale va gui Admin phe duyet");
+        System.out.println("3. Xem Flash Sale cua toi");
+        System.out.println("4. Tao Flash Sale");
         System.out.println("5. Xem chi tiet mot Flash Sale");
         System.out.println("6. Xem hang hoa trong mot Flash Sale");
         System.out.println("7. Chinh sua Flash Sale (thong tin/them/xoa hang hoa)");
-        System.out.println("8. Gui lai yeu cau phe duyet");
-        System.out.println("9. Xem danh sach don hang nhan duoc");
-        System.out.println("10. Xem chi tiet don hang");
-        System.out.println("11. Cap nhat trang thai don hang");
-        System.out.println("12. Dang xuat");
+        System.out.println("8. Bat dau Flash Sale");
+        System.out.println("9. Ket thuc Flash Sale");
+        System.out.println("10. Xem danh sach don hang nhan duoc");
+        System.out.println("11. Xem chi tiet don hang");
+        System.out.println("12. Cap nhat trang thai don hang");
+        System.out.println("13. Dang xuat");
         System.out.println("0. Quay lai chon role");
     }
 
@@ -130,7 +132,7 @@ public class SellerView {
             String end = input.readLine("Ket thuc (yyyy-MM-dd'T'HH:mm:ss): ");
             int discount = input.readInt("Phan tram giam (1-99): ");
             FlashSaleEvent event = sellerController.createFlashSaleRequest(name, start, end, discount);
-            System.out.println("Da tao va gui cho Admin. Event ID: " + event.getEventId()
+            System.out.println("Da tao Flash Sale. Event ID: " + event.getEventId()
                     + " | Trang thai: " + event.getStatus().getMoTa());
         } catch (IllegalArgumentException e) {
             System.out.println("Tao Flash Sale that bai: " + e.getMessage());
@@ -191,9 +193,8 @@ public class SellerView {
         try {
             FlashSaleEvent event = sellerController.findOwnEvent(eventId)
                     .orElseThrow(() -> new IllegalArgumentException("Khong tim thay Flash Sale cua ban"));
-            if (event.getStatus() != model.enums.SaleStatus.CHO_PHE_DUYET
-                    && event.getStatus() != model.enums.SaleStatus.TU_CHOI) {
-                throw new IllegalArgumentException("Chi duoc sua Flash Sale cho duyet hoac bi tu choi");
+            if (event.getStatus() != model.enums.SaleStatus.SAP_DIEN_RA) {
+                throw new IllegalArgumentException("Chi duoc sua Flash Sale sap dien ra");
             }
 
             boolean editing = true;
@@ -244,13 +245,23 @@ public class SellerView {
                 : "Xoa hang hoa that bai.");
     }
 
-    private void resubmitFlashSale() {
+    private void startFlashSale() {
         try {
-            String eventId = input.readLine("Event ID bi tu choi can gui lai: ").trim();
-            FlashSaleEvent event = sellerController.resubmit(eventId);
-            System.out.println("Gui lai thanh cong. Trang thai: " + event.getStatus().getMoTa());
+            String eventId = input.readLine("Event ID can bat dau: ").trim();
+            FlashSaleEvent event = sellerController.startEvent(eventId);
+            System.out.println("Flash Sale dang dien ra. Trang thai: " + event.getStatus().getMoTa());
         } catch (IllegalArgumentException | IllegalStateException e) {
-            System.out.println("Gui lai that bai: " + e.getMessage());
+            System.out.println("Bat dau Flash Sale that bai: " + e.getMessage());
+        }
+    }
+
+    private void endFlashSale() {
+        try {
+            String eventId = input.readLine("Event ID can ket thuc: ").trim();
+            FlashSaleEvent event = sellerController.endEvent(eventId);
+            System.out.println("Ket thuc Flash Sale thanh cong. Trang thai: " + event.getStatus().getMoTa());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println("Ket thuc Flash Sale that bai: " + e.getMessage());
         }
     }
 
@@ -258,7 +269,7 @@ public class SellerView {
         try {
             List<Order> orders = sellerController.getReceivedOrders();
             if (orders.isEmpty()) {
-                System.out.println("Chua co don hang nao dat san pham trong Flash Sale cua ban.");
+                System.out.println("Chua co don hang nao dat san pham cua ban.");
                 return;
             }
             System.out.printf("%-12s %-12s %-12s %-20s %-22s %14s%n",
@@ -308,17 +319,19 @@ public class SellerView {
 
     private void updateOrderStatus() {
         String orderId = input.readLine("Order ID can cap nhat: ").trim();
-        System.out.println("1. Da xac nhan");
+        System.out.println("1. Xac nhan don hang");
         System.out.println("2. Dang chuan bi hang");
         System.out.println("3. Dang giao hang");
-        System.out.println("4. Hoan thanh");
+        System.out.println("4. Tu choi don dang cho xac nhan");
+        System.out.println("5. Giao hang that bai");
         int choice = input.readInt("Chon trang thai moi: ");
         OrderStatus status;
         switch (choice) {
             case 1: status = OrderStatus.DA_XAC_NHAN; break;
             case 2: status = OrderStatus.DANG_CHUAN_BI; break;
             case 3: status = OrderStatus.DANG_GIAO; break;
-            case 4: status = OrderStatus.HOAN_THANH; break;
+            case 4: status = OrderStatus.TU_CHOI; break;
+            case 5: status = OrderStatus.GIAO_THAT_BAI; break;
             default:
                 System.out.println("Trang thai khong hop le.");
                 return;

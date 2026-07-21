@@ -3,6 +3,8 @@ package service;
 import model.enums.LockMechanism;
 
 public class SimulatorResult {
+    public static final LockMechanism BASELINE_MECHANISM = LockMechanism.SYNCHRONIZED;
+
     private final LockMechanism mechanism;
     private final String flashItemId;
     private final int threadCount;
@@ -48,11 +50,9 @@ public class SimulatorResult {
     public double getVsBaselinePercent() { return vsBaselinePercent; }
     public boolean isTargetPassed() { return targetPassed; }
 
-    /** So sánh TPS với NO_LOCK và đánh giá mục tiêu an toàn + giảm không quá 30%. */
+    /** So sánh TPS với baseline an toàn và đánh giá mục tiêu an toàn + giảm không quá 30%. */
     public void compareWithBaseline(double baselineThroughput) {
-        if (mechanism == LockMechanism.NO_LOCK) {
-            vsBaselinePercent = 0.0;
-        } else if (baselineThroughput <= 0.0) {
+        if (baselineThroughput <= 0.0) {
             vsBaselinePercent = -100.0;
         } else {
             vsBaselinePercent = (throughput - baselineThroughput) / baselineThroughput * 100.0;
