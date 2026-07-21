@@ -313,8 +313,16 @@ public class OrderService {
         if (!order.getCustomerId().equalsIgnoreCase(customer.getCustomerId())) {
             throw new IllegalArgumentException("Ban khong co quyen huy don hang nay");
         }
-        if (order.getStatus() != OrderStatus.CHO_XU_LY) {
-            throw new IllegalArgumentException("Chi duoc huy don dang cho shop xac nhan");
+        if (order.getStatus() == OrderStatus.DA_HUY) {
+            throw new IllegalArgumentException("Don hang nay da duoc huy truoc do.");
+        }
+        if (order.getStatus() == OrderStatus.HOAN_THANH
+                || order.getStatus() == OrderStatus.GIAO_THAT_BAI
+                || order.getStatus() == OrderStatus.TU_CHOI) {
+            throw new IllegalArgumentException("Don hang da hoan thanh hoac giao that bai, khong the huy.");
+        }
+        if (order.getStatus() == OrderStatus.DANG_GIAO) {
+            throw new IllegalArgumentException("Don hang dang duoc giao, khong the huy. Vui long tu choi nhan hang khi shipper den.");
         }
 
         restoreOrderInventory(order);
