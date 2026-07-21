@@ -512,15 +512,7 @@ public class OrderService {
     }
 
     private boolean isSuccessfulOrder(OrderStatus status) {
-<<<<<<< HEAD
-        return status == OrderStatus.CHO_XU_LY
-                || status == OrderStatus.DA_XAC_NHAN
-                || status == OrderStatus.DANG_CHUAN_BI
-                || status == OrderStatus.DANG_GIAO
-                || status == OrderStatus.HOAN_THANH;
-=======
         return status == OrderStatus.HOAN_THANH;
->>>>>>> a5a83dcd015cbb535c01ed6490fef921c8fc0561
     }
 
     private CustomerTier calculateTierByTotalSpent(double totalSpent) {

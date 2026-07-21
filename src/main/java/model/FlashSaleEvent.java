@@ -77,12 +77,8 @@ public class FlashSaleEvent extends BaseEntity {
     /**
      * Trả về trạng thái thực tế dựa theo thời gian hiện tại.
      * Chỉ dùng khi hiển thị — không thay đổi giá trị lưu CSV.
-     * Các trạng thái CHO_PHE_DUYET và TU_CHOI luôn giữ nguyên.
      */
     public SaleStatus getEffectiveStatus() {
-        if (status == SaleStatus.CHO_PHE_DUYET || status == SaleStatus.TU_CHOI) {
-            return status;
-        }
         try {
             java.time.LocalDateTime now = java.time.LocalDateTime.now();
             java.time.LocalDateTime start = java.time.LocalDateTime.parse(startTime);
