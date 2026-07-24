@@ -29,8 +29,9 @@ public class FlashSaleEventRepository extends CsvRepository<FlashSaleEvent> {
     }
 
     /**
-     * Đồng bộ các sự kiện sắp diễn ra theo thời gian mỗi khi dữ liệu được đọc.
-     * Khi startTime đã tới, trạng thái tự chuyển từ SAP_DIEN_RA sang DANG_DIEN_RA.
+     * Đồng bộ vòng đời sự kiện theo thời gian mỗi khi dữ liệu được đọc.
+     * Khi startTime đã tới, trạng thái chuyển sang DANG_DIEN_RA; khi endTime
+     * đã qua, trạng thái chuyển sang DA_KET_THUC.
      */
     @Override
     public synchronized List<FlashSaleEvent> findAll() {
@@ -39,11 +40,16 @@ public class FlashSaleEventRepository extends CsvRepository<FlashSaleEvent> {
         boolean changed = false;
 
         for (FlashSaleEvent event : events) {
-            if (event.getStatus() != SaleStatus.SAP_DIEN_RA) continue;
             try {
                 LocalDateTime startTime = LocalDateTime.parse(event.getStartTime());
-                if (!now.isBefore(startTime)) {
-                    event.setStatus(SaleStatus.DANG_DIEN_RA);
+                LocalDateTime endTime = LocalDateTime.parse(event.getEndTime());
+                if (event.getStatus() == SaleStatus.DANG_DIEN_RA && now.isAfter(endTime)) {
+                    event.setStatus(SaleStatus.DA_KET_THUC);
+                    changed = true;
+                } else if (event.getStatus() == SaleStatus.SAP_DIEN_RA
+                        && !now.isBefore(startTime)) {
+                    event.setStatus(now.isAfter(endTime)
+                            ? SaleStatus.DA_KET_THUC : SaleStatus.DANG_DIEN_RA);
                     changed = true;
                 }
             } catch (DateTimeParseException ignored) {

@@ -79,6 +79,11 @@ public class FlashSaleEvent extends BaseEntity {
      * Chỉ dùng khi hiển thị — không thay đổi giá trị lưu CSV.
      */
     public SaleStatus getEffectiveStatus() {
+        // Trạng thái kết thúc là trạng thái cuối. Nếu Admin/Seller kết thúc sớm,
+        // không được suy ra lại thành DANG_DIEN_RA chỉ vì thời gian vẫn còn.
+        if (status == SaleStatus.DA_KET_THUC) {
+            return SaleStatus.DA_KET_THUC;
+        }
         try {
             java.time.LocalDateTime now = java.time.LocalDateTime.now();
             java.time.LocalDateTime start = java.time.LocalDateTime.parse(startTime);
