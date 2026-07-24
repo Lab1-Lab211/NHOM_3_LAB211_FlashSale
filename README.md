@@ -65,8 +65,9 @@ Email: admin@gmail.com
 Password: 123456
 ```
 
-Flash Sale do người bán tạo có trạng thái `CHO_PHE_DUYET`; Admin phải phê duyệt
-trước khi có thể bắt đầu sự kiện. Simulator chỉ nằm trong menu Admin.
+Flash Sale do người bán tạo có trạng thái `SAP_DIEN_RA` và tự chuyển trạng thái
+theo thời gian bắt đầu/kết thúc. Admin có thể xem, kết thúc sớm sự kiện đang chạy
+và chạy Simulator bốn cơ chế lock.
 
 ## Cơ chế Lock
 

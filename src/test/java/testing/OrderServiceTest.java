@@ -266,8 +266,8 @@ public class OrderServiceTest {
         ProductRepository productRepository = new ProductRepository(base + "products.csv");
 
         eventRepository.save(new FlashSaleEvent(
-                "EVT-TEST", "Test Event", "2026-01-01T00:00:00",
-                "2026-01-01T01:00:00", SaleStatus.DANG_DIEN_RA, 50));
+                "EVT-TEST", "Test Event", "2000-01-01T00:00:00",
+                "2999-01-01T01:00:00", SaleStatus.DANG_DIEN_RA, 50));
         itemRepository.save(new FlashSaleItem(
                 "FSI-TEST", "EVT-TEST", "PRD-TEST", 5, 0, 100000.0, 1));
         productRepository.save(new Product(

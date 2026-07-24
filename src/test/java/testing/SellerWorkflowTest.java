@@ -125,4 +125,22 @@ public class SellerWorkflowTest {
         assertEquals(SaleStatus.DA_KET_THUC,
                 flashSaleService.endEvent(startedEvent.getEventId()).get().getStatus());
     }
+
+    @Test
+    void expiredFlashSaleEndsAutomaticallyAndEarlyEndRemainsFinal() {
+        FlashSaleEventRepository eventRepo = new FlashSaleEventRepository(EVENTS);
+        FlashSaleEvent expiredEvent = new FlashSaleEvent(
+                "EVT-EXPIRED", "Expired Event", "2000-03-01T08:00:00", "2000-03-01T10:00:00",
+                SaleStatus.DANG_DIEN_RA, 20);
+        eventRepo.save(expiredEvent);
+
+        FlashSaleEvent reloaded = eventRepo.findById(expiredEvent.getEventId()).get();
+        assertEquals(SaleStatus.DA_KET_THUC, reloaded.getStatus());
+        assertEquals(SaleStatus.DA_KET_THUC, reloaded.getEffectiveStatus());
+
+        FlashSaleEvent endedEarly = new FlashSaleEvent(
+                "EVT-EARLY-END", "Early End", "2000-03-01T08:00:00", "2999-03-01T10:00:00",
+                SaleStatus.DA_KET_THUC, 20);
+        assertEquals(SaleStatus.DA_KET_THUC, endedEarly.getEffectiveStatus());
+    }
 }

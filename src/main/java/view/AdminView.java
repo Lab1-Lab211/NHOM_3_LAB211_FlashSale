@@ -29,6 +29,7 @@ public class AdminView {
             System.out.println("Sai tai khoan Admin.");
             return;
         }
+        System.out.println("Dang nhap Admin thanh cong.");
 
         boolean running = true;
         while (running) {
@@ -43,7 +44,7 @@ public class AdminView {
                     case "1": printEvents(flashSaleController.getAllEvents()); break;
                     case "2": endEvent(); break;
                     case "3": simulatorView.runInteractive(); break;
-                    case "0": running = false; break;
+                    case "0": running = false; System.out.println("Da dang xuat Admin."); break;
                     default: System.out.println("Lua chon khong hop le.");
                 }
             } catch (IllegalArgumentException | IllegalStateException e) {
@@ -65,9 +66,12 @@ public class AdminView {
             System.out.println("Khong co Flash Sale phu hop.");
             return;
         }
+        System.out.printf("%-12s %-28s %-18s %-19s %-19s %8s%n",
+                "Event ID", "Ten Flash Sale", "Trang thai", "Bat dau", "Ket thuc", "Giam");
+        System.out.println("--------------------------------------------------------------------------------------------------------------");
         for (FlashSaleEvent event : events) {
-            System.out.printf("%s | %s | %s | %s -> %s | giam %d%%%n",
-                    event.getEventId(), event.getEventName(), event.getStatus().getMoTa(),
+            System.out.printf("%-12s %-28s %-18s %-19s %-19s %7d%%%n",
+                    event.getEventId(), event.getEventName(), event.getEffectiveStatus().getMoTa(),
                     event.getStartTime(), event.getEndTime(), event.getDiscountPercent());
         }
     }
